@@ -9,7 +9,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Favicon / Logotipo no Navegador (Base64) -->
-  <link rel="icon" type="image/png" href="icone lsg.ico" />
+  <link rel="icon" type="image/png" href=""icone lsg.ico" />
 
   <style>
     /* RESET & BASE */
@@ -75,7 +75,7 @@
   <!-- HEADER COM LOGO BASE64 -->
   <header>
     <div class="logo-container">
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAG+SURBVHic7Z0xTgNBEAYfQkJCggNC..." alt="Logo" class="logo-img">
+      <img src="logo lsg.png">
       <span class="logo-title">Controle de Portaria</span>
     </div>
   </header>
@@ -176,15 +176,12 @@
   </div>
 
   <script>
-    // Inicializar Ícones Lucide
     lucide.createIcons();
 
-    // URL do Web App (Google Apps Script)
     const URL_WEB_APP = 'https://script.google.com/macros/s/AKfycbz9mkraqbunOd0wao6vVv3ICoS-yIXioAzi6cfT2gLIlTZm5V4ad7uleO4EekcUnDhRSA/exec';
 
     let idRegistroSelecionado = null;
 
-    // Alternar entre Abas
     function switchTab(tabName) {
       document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -195,11 +192,10 @@
       } else {
         document.querySelectorAll('.tab-button')[1].classList.add('active');
         document.getElementById('tab-retorno').classList.add('active');
-        carregarMovimentacoes(); // Atualiza a tabela ao abrir a aba
+        carregarMovimentacoes();
       }
     }
 
-    // Carregar Opções de Listas (Veículos, Motoristas, Controladores, Auxiliares)
     window.onload = function() {
       carregarOpcoes();
       carregarMovimentacoes();
@@ -221,23 +217,26 @@
             });
           }
 
+          // Unifica a lista de funcionários (usa 'funcionarios' se existir no retorno do backend, ou faz fallback para 'motoristas' / 'auxiliares')
+          const listaFuncionarios = opcoes.funcionarios || opcoes.motoristas || opcoes.auxiliares || [];
+
           // Preenchimento dos Selects de Saída
           preencherSelect('saidaVeiculo', opcoes.veiculos, 'Selecione o Veículo');
-          preencherSelect('saidaMotorista', opcoes.motoristas, 'Selecione o Motorista');
+          preencherSelect('saidaMotorista', listaFuncionarios, 'Selecione o Motorista');
           preencherSelect('saidaControlador', opcoes.controladores, 'Selecione o Controlador');
 
-          // Renderizar Checkboxes de Auxiliares
+          // Renderizar Checkboxes de Auxiliares com a mesma lista de funcionários
           const containerAux = document.getElementById('saidaAuxiliares');
           containerAux.innerHTML = '';
-          if (opcoes.auxiliares && opcoes.auxiliares.length > 0) {
-            opcoes.auxiliares.forEach(aux => {
+          if (listaFuncionarios && listaFuncionarios.length > 0) {
+            listaFuncionarios.forEach(func => {
               const label = document.createElement('label');
               label.className = 'checkbox-item';
-              label.innerHTML = `<input type="checkbox" name="auxiliares" value="${aux}"> ${aux}`;
+              label.innerHTML = `<input type="checkbox" name="auxiliares" value="${func}"> ${func}`;
               containerAux.appendChild(label);
             });
           } else {
-            containerAux.innerHTML = '<span style="font-size:0.85rem; color:#94a3b8;">Nenhum auxiliar cadastrado.</span>';
+            containerAux.innerHTML = '<span style="font-size:0.85rem; color:#94a3b8;">Nenhum funcionário cadastrado.</span>';
           }
         })
         .catch(err => console.error('Erro ao buscar opções:', err));
@@ -256,7 +255,6 @@
       }
     }
 
-    // Carregar Tabela de Movimentações (Aba Retorno)
     function carregarMovimentacoes() {
       fetch(`${URL_WEB_APP}?acao=obterMovimentacoes`)
         .then(res => res.json())
@@ -297,7 +295,6 @@
         });
     }
 
-    // Modal de Retorno
     function abrirModalRetorno(id) {
       idRegistroSelecionado = id;
       document.getElementById('modalIdExibicao').textContent = id;
@@ -345,7 +342,6 @@
       });
     }
 
-    // Envio do Formulário de Saída
     function handleSaida(event) {
       event.preventDefault();
 
