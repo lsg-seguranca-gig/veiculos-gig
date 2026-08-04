@@ -125,7 +125,7 @@
       <div class="filter-grid">
         <div class="form-group">
           <label for="filtroBusca">Buscar por Texto</label>
-          <input type="text" id="filtroBusca" class="form-control" placeholder="ID, Placa, Obs...">
+          <input type="text" id="filtroBusca" class="form-control" placeholder="ID, Obs...">
         </div>
         
         <div class="form-group">
@@ -134,6 +134,13 @@
             <option value="">Todos</option>
             <option value="transito">Em Trânsito</option>
             <option value="concluido">Concluído</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="filtroVeiculo">Veículo</label>
+          <select id="filtroVeiculo" class="form-control">
+            <option value="">Todos</option>
           </select>
         </div>
 
@@ -225,10 +232,23 @@
       
       fetch(`${URL_PROXY}?acao=obterMovimentacoes`)
         .then(res => res.json())
-        .then(dados => {
+        .then(resposta => {
           document.getElementById('overlayProcessando').style.display = 'none';
-          todosRegistros = (dados || []).filter(r => r.id && (r.veiculo || r.motorista));
-          popularDropdowns(todosRegistros);
+          
+          let movimentacoes = [];
+          let opcoes = null;
+
+          if (Array.isArray(resposta)) {
+            movimentacoes = resposta;
+          } else if (resposta && resposta.movimentacoes) {
+            movimentacoes = resposta.movimentacoes;
+            opcoes = resposta.opcoes;
+          }
+
+          todosRegistros = (movimentacoes || []).filter(r => r.id && (r.veiculo || r.motorista));
+          
+          // Popula dropdowns usando os cadastros completos do banco de dados
+          popularDropdowns(opcoes, todosRegistros);
           aplicarFiltros();
         })
         .catch(err => {
@@ -238,27 +258,38 @@
         });
     }
 
-    function popularDropdowns(registros) {
-      const motoristasSet = new Set();
-      const auxiliaresSet = new Set();
-      const controladoresSet = new Set();
+    function popularDropdowns(opcoes, registros) {
+      let veiculosList = [];
+      let motoristasList = [];
+      let auxiliaresList = [];
+      let controladoresList = [];
 
-      registros.forEach(r => {
-        if (r.motorista) motoristasSet.add(r.motorista.trim());
-        
-        if (r.auxiliares) {
-          r.auxiliares.split(',').forEach(aux => {
-            if (aux.trim()) auxiliaresSet.add(aux.trim());
-          });
-        }
+      // Caso o backend retorne as opções cadastradas em banco
+      if (opcoes) {
+        veiculosList = opcoes.veiculos || [];
+        motoristasList = opcoes.motoristas || opcoes.funcionarios || [];
+        auxiliaresList = opcoes.auxiliares || opcoes.funcionarios || [];
+        controladoresList = opcoes.controladores || [];
+      } else {
+        // Fallback: extrai dos registros caso as opções não venham estruturadas
+        const vSet = new Set(), mSet = new Set(), aSet = new Set(), cSet = new Set();
+        registros.forEach(r => {
+          if (r.veiculo) vSet.add(r.veiculo.trim());
+          if (r.motorista) mSet.add(r.motorista.trim());
+          if (r.auxiliares) r.auxiliares.split(',').forEach(aux => aux.trim() && aSet.add(aux.trim()));
+          if (r.controladorSaida) cSet.add(r.controladorSaida.trim());
+          if (r.controladorRetorno) cSet.add(r.controladorRetorno.trim());
+        });
+        veiculosList = Array.from(vSet);
+        motoristasList = Array.from(mSet);
+        auxiliaresList = Array.from(aSet);
+        controladoresList = Array.from(cSet);
+      }
 
-        if (r.controladorSaida) controladoresSet.add(r.controladorSaida.trim());
-        if (r.controladorRetorno) controladoresSet.add(r.controladorRetorno.trim());
-      });
-
-      preencherSelect('filtroMotorista', Array.from(motoristasSet).sort());
-      preencherSelect('filtroAuxiliar', Array.from(auxiliaresSet).sort());
-      preencherSelect('filtroControlador', Array.from(controladoresSet).sort());
+      preencherSelect('filtroVeiculo', veiculosList.sort());
+      preencherSelect('filtroMotorista', motoristasList.sort());
+      preencherSelect('filtroAuxiliar', auxiliaresList.sort());
+      preencherSelect('filtroControlador', controladoresList.sort());
     }
 
     function preencherSelect(elemId, lista) {
@@ -266,6 +297,7 @@
       const valorAtual = select.value;
       select.innerHTML = '<option value="">Todos</option>';
       lista.forEach(item => {
+        if (!item) return;
         const option = document.createElement('option');
         option.value = item;
         option.textContent = item;
@@ -277,6 +309,7 @@
     function aplicarFiltros() {
       const termo = document.getElementById('filtroBusca').value.toLowerCase();
       const status = document.getElementById('filtroStatus').value;
+      const veiculoSel = document.getElementById('filtroVeiculo').value;
       const motoristaSel = document.getElementById('filtroMotorista').value;
       const auxiliarSel = document.getElementById('filtroAuxiliar').value;
       const controladorSel = document.getElementById('filtroControlador').value;
@@ -292,6 +325,7 @@
         if (status === 'transito') passaStatus = emTransito;
         if (status === 'concluido') passaStatus = !emTransito;
 
+        const passaVeiculo = !veiculoSel || (item.veiculo && item.veiculo.trim().toLowerCase().includes(veiculoSel.trim().toLowerCase()));
         const passaMotorista = !motoristaSel || (item.motorista && item.motorista.trim() === motoristaSel);
         const passaAuxiliar = !auxiliarSel || (item.auxiliares && item.auxiliares.includes(auxiliarSel));
         const passaControlador = !controladorSel || (item.controladorSaida === controladorSel || item.controladorRetorno === controladorSel);
@@ -306,7 +340,7 @@
           }
         }
 
-        return passaTexto && passaStatus && passaMotorista && passaAuxiliar && passaControlador && passaData;
+        return passaTexto && passaStatus && passaVeiculo && passaMotorista && passaAuxiliar && passaControlador && passaData;
       });
 
       renderizarTabela(registrosFiltradosAtuais);
@@ -354,6 +388,7 @@
     function limparFiltros() {
       document.getElementById('filtroBusca').value = '';
       document.getElementById('filtroStatus').value = '';
+      document.getElementById('filtroVeiculo').value = '';
       document.getElementById('filtroMotorista').value = '';
       document.getElementById('filtroAuxiliar').value = '';
       document.getElementById('filtroControlador').value = '';
@@ -362,7 +397,6 @@
       aplicarFiltros();
     }
 
-    // EXPORTAÇÃO PARA EXCEL (.XLSX)
     function exportarExcel() {
       if (registrosFiltradosAtuais.length === 0) return alert('Sem dados para exportar.');
 
@@ -383,7 +417,6 @@
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Movimentações");
 
-      // Auto-ajuste da largura das colunas
       const maxCols = Object.keys(dadosFormatados[0]).map(key => ({
         wch: Math.max(key.length, ...dadosFormatados.map(row => (row[key] ? row[key].toString().length : 0))) + 2
       }));
