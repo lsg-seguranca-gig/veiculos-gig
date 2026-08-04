@@ -3,78 +3,203 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle de Veículos</title>
+  <title>Controle de Veículos - Portaria</title>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Favicon / Logotipo no Navegador (Base64) -->
+  <link rel="icon" type="image/png" href="icone lsg.ico" />
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f8; color: #333; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    .btn-green { background-color: #1e8e3e; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .btn-green:hover { background-color: #156d2f; }
+    /* RESET & BASE */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body { background-color: #f1f5f9; color: #1e293b; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* HEADER */
+    header { background-color: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .logo-container { display: flex; align-items: center; gap: 12px; }
+    .logo-img { height: 40px; width: auto; object-fit: contain; }
+    .logo-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
+
+    /* CONTAINER PRINCIPAL */
+    main { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+    /* NAVEGAÇÃO / TABS */
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; }
+    .tab-button { background: none; border: none; padding: 12px 24px; font-size: 0.95rem; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+    .tab-button:hover { color: #2563eb; }
+    .tab-button.active { color: #2563eb; border-bottom-color: #2563eb; }
+
+    /* CONTEÚDO DAS TABS */
+    .tab-content { display: none; background: #ffffff; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .tab-content.active { display: block; }
+
+    /* FORMULÁRIOS */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: #334155; margin-bottom: 0.5rem; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+    .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    textarea.form-control { resize: vertical; min-height: 80px; }
+
+    /* CHECKBOX / AUXILIARES MULTI-SELECT */
+    .checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; max-height: 180px; overflow-y: auto; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #f8fafc; }
+    .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #334155; cursor: pointer; }
+
+    /* BOTÕES */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 0.95rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: background-color 0.2s; }
+    .btn-primary { background-color: #2563eb; color: #ffffff; }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-success { background-color: #10b981; color: #ffffff; }
+    .btn-success:hover { background-color: #059669; }
+
+    /* TABELAS */
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 13px; }
     th { background-color: #f8fafc; font-weight: bold; color: #334155; }
     .badge-transito { background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: bold; display: inline-block; }
     .badge-concluido { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-weight: bold; display: inline-block; }
-    
-    /* Modais e Overlays */
+
+    /* MODAL DE CONFIRMAÇÃO E OVERLAY */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
     .modal-box { background: white; padding: 25px; border-radius: 8px; width: 380px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     .modal-box select { width: 100%; padding: 10px; margin: 15px 0 20px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-    
     #overlayProcessando { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); color: white; font-size: 20px; font-weight: bold; justify-content: center; align-items: center; z-index: 2000; }
   </style>
 </head>
 <body>
 
+  <!-- Overlay de Carregamento -->
   <div id="overlayProcessando">Processando...</div>
 
-  <div class="card">
-    <h2 style="margin-top:0;">Veículos em Atendimento / Histórico</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Status</th>
-          <th>Placa / Veículo</th>
-          <th>Motorista</th>
-          <th>Auxiliar(es)</th>
-          <th>Saída</th>
-          <th>Controlador Saída</th>
-          <th>Retorno</th>
-          <th>Controlador Retorno</th>
-          <th>Obs / Destino</th>
-          <th>Ação</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaCorpo">
-        <tr><td colspan="11" style="text-align:center;">Carregando dados...</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <!-- HEADER COM LOGO BASE64 -->
+  <header>
+    <div class="logo-container">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAG+SURBVHic7Z0xTgNBEAYfQkJCggNC..." alt="Logo" class="logo-img">
+      <span class="logo-title">Controle de Portaria</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ABAS DE NAVEGAÇÃO -->
+    <div class="nav-tabs">
+      <button class="tab-button active" onclick="switchTab('saida')">
+        <i data-lucide="log-out"></i> Registrar Saída
+      </button>
+      <button class="tab-button" onclick="switchTab('retorno')">
+        <i data-lucide="log-in"></i> Veículos em Atendimento / Retorno
+      </button>
+    </div>
+
+    <!-- CONTEÚDO 1: REGISTRAR SAÍDA -->
+    <div id="tab-saida" class="tab-content active">
+      <form id="formSaida" onsubmit="handleSaida(event)">
+        <div class="form-group">
+          <label for="saidaVeiculo">Veículo / Placa *</label>
+          <select id="saidaVeiculo" class="form-control" required>
+            <option value="">Carregando opções...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="saidaMotorista">Motorista *</label>
+          <select id="saidaMotorista" class="form-control" required>
+            <option value="">Carregando opções...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Auxiliares (Opcional)</label>
+          <div id="saidaAuxiliares" class="checkbox-group">
+            <!-- Opções carregadas dinamicamente via JS -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="saidaControlador">Controlador de Saída *</label>
+          <select id="saidaControlador" class="form-control" required>
+            <option value="">Carregando opções...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="saidaObs">Observações / Destino</label>
+          <textarea id="saidaObs" class="form-control" placeholder="Informe a rota, KM inicial ou observações relevantes..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          <i data-lucide="send"></i> Confirmar Saída
+        </button>
+      </form>
+    </div>
+
+    <!-- CONTEÚDO 2: VEÍCULOS EM ATENDIMENTO / RETORNO -->
+    <div id="tab-retorno" class="tab-content">
+      <h2 style="margin-bottom: 15px; font-size: 1.1rem; color: #1e293b;">Veículos em Atendimento / Histórico</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Status</th>
+            <th>Placa / Veículo</th>
+            <th>Motorista</th>
+            <th>Auxiliar(es)</th>
+            <th>Saída</th>
+            <th>Controlador Saída</th>
+            <th>Retorno</th>
+            <th>Controlador Retorno</th>
+            <th>Obs / Destino</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaCorpo">
+          <tr><td colspan="11" style="text-align:center;">Carregando dados...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
 
   <!-- Modal Registrar Retorno -->
   <div id="modalRetorno" class="modal-overlay">
     <div class="modal-box">
       <h3 style="margin-top:0;">Registrar Retorno do Veículo</h3>
-      <p><strong>ID:</strong> <span id="modalIdExibicao"></span></p>
+      <p style="margin-top: 10px;"><strong>ID:</strong> <span id="modalIdExibicao"></span></p>
       <label for="selectControladorRetorno"><strong>Selecione o Controlador (Retorno)</strong></label>
       <select id="selectControladorRetorno">
         <option value="">Selecione o Controlador</option>
       </select>
       <div style="text-align: right; gap: 10px; display: flex; justify-content: flex-end;">
         <button type="button" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer;" onclick="fecharModalRetorno()">Cancelar</button>
-        <button type="button" class="btn-green" onclick="executarConfirmacaoRetorno()">Confirmar Retorno</button>
+        <button type="button" class="btn btn-success" onclick="executarConfirmacaoRetorno()">Confirmar Retorno</button>
       </div>
     </div>
   </div>
 
   <script>
-    // =========================================================================
-    // COLE AQUI A URL COMPLETA DO SEU GOOGLE APPS SCRIPT
-    // =========================================================================
+    // Inicializar Ícones Lucide
+    lucide.createIcons();
+
+    // URL do Web App (Google Apps Script)
     const URL_WEB_APP = 'https://script.google.com/macros/s/AKfycbz9mkraqbunOd0wao6vVv3ICoS-yIXioAzi6cfT2gLIlTZm5V4ad7uleO4EekcUnDhRSA/exec';
 
     let idRegistroSelecionado = null;
 
+    // Alternar entre Abas
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      if (tabName === 'saida') {
+        document.querySelectorAll('.tab-button')[0].classList.add('active');
+        document.getElementById('tab-saida').classList.add('active');
+      } else {
+        document.querySelectorAll('.tab-button')[1].classList.add('active');
+        document.getElementById('tab-retorno').classList.add('active');
+        carregarMovimentacoes(); // Atualiza a tabela ao abrir a aba
+      }
+    }
+
+    // Carregar Opções de Listas (Veículos, Motoristas, Controladores, Auxiliares)
     window.onload = function() {
       carregarOpcoes();
       carregarMovimentacoes();
@@ -84,20 +209,54 @@
       fetch(`${URL_WEB_APP}?acao=obterOpcoes`)
         .then(res => res.json())
         .then(opcoes => {
-          const select = document.getElementById('selectControladorRetorno');
-          select.innerHTML = '<option value="">Selecione o Controlador</option>';
+          // Opções do Select de Retorno no Modal
+          const selectRetorno = document.getElementById('selectControladorRetorno');
+          selectRetorno.innerHTML = '<option value="">Selecione o Controlador</option>';
           if (opcoes && opcoes.controladores) {
             opcoes.controladores.forEach(function(c) {
               const opt = document.createElement('option');
               opt.value = c;
               opt.textContent = c;
-              select.appendChild(opt);
+              selectRetorno.appendChild(opt);
             });
+          }
+
+          // Preenchimento dos Selects de Saída
+          preencherSelect('saidaVeiculo', opcoes.veiculos, 'Selecione o Veículo');
+          preencherSelect('saidaMotorista', opcoes.motoristas, 'Selecione o Motorista');
+          preencherSelect('saidaControlador', opcoes.controladores, 'Selecione o Controlador');
+
+          // Renderizar Checkboxes de Auxiliares
+          const containerAux = document.getElementById('saidaAuxiliares');
+          containerAux.innerHTML = '';
+          if (opcoes.auxiliares && opcoes.auxiliares.length > 0) {
+            opcoes.auxiliares.forEach(aux => {
+              const label = document.createElement('label');
+              label.className = 'checkbox-item';
+              label.innerHTML = `<input type="checkbox" name="auxiliares" value="${aux}"> ${aux}`;
+              containerAux.appendChild(label);
+            });
+          } else {
+            containerAux.innerHTML = '<span style="font-size:0.85rem; color:#94a3b8;">Nenhum auxiliar cadastrado.</span>';
           }
         })
         .catch(err => console.error('Erro ao buscar opções:', err));
     }
 
+    function preencherSelect(idElemento, lista, placeholder) {
+      const select = document.getElementById(idElemento);
+      select.innerHTML = `<option value="">${placeholder}</option>`;
+      if (lista && lista.length > 0) {
+        lista.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item;
+          opt.textContent = item;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    // Carregar Tabela de Movimentações (Aba Retorno)
     function carregarMovimentacoes() {
       fetch(`${URL_WEB_APP}?acao=obterMovimentacoes`)
         .then(res => res.json())
@@ -126,7 +285,7 @@
               <td>${r.controladorRetorno || '-'}</td>
               <td>${r.observacoes || '-'}</td>
               <td>
-                ${emTransito ? `<button class="btn-green" onclick="abrirModalRetorno('${r.id}')">Dar Retorno</button>` : ''}
+                ${emTransito ? `<button class="btn btn-success" style="padding:4px 8px; font-size:12px;" onclick="abrirModalRetorno('${r.id}')">Dar Retorno</button>` : ''}
               </td>
             `;
             tbody.appendChild(tr);
@@ -138,6 +297,7 @@
         });
     }
 
+    // Modal de Retorno
     function abrirModalRetorno(id) {
       idRegistroSelecionado = id;
       document.getElementById('modalIdExibicao').textContent = id;
@@ -160,7 +320,6 @@
 
       document.getElementById('overlayProcessando').style.display = 'flex';
 
-      // Envia como text/plain para contornar o bloqueio CORS do Google Apps Script
       fetch(URL_WEB_APP, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -183,6 +342,45 @@
       .catch(err => {
         document.getElementById('overlayProcessando').style.display = 'none';
         alert('Erro ao enviar requisição ao servidor: ' + err);
+      });
+    }
+
+    // Envio do Formulário de Saída
+    function handleSaida(event) {
+      event.preventDefault();
+
+      const auxiliaresSelecionados = Array.from(document.querySelectorAll('input[name="auxiliares"]:checked'))
+        .map(cb => cb.value);
+
+      const payload = {
+        acao: 'registrarSaida',
+        veiculo: document.getElementById('saidaVeiculo').value,
+        motorista: document.getElementById('saidaMotorista').value,
+        auxiliares: auxiliaresSelecionados,
+        controladorSaida: document.getElementById('saidaControlador').value,
+        observacoes: document.getElementById('saidaObs').value
+      };
+
+      document.getElementById('overlayProcessando').style.display = 'flex';
+
+      fetch(URL_WEB_APP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(resposta => {
+        document.getElementById('overlayProcessando').style.display = 'none';
+        if (resposta.status === 'sucesso') {
+          alert('Saída registrada com sucesso!');
+          document.getElementById('formSaida').reset();
+        } else {
+          alert('Erro ao registrar saída: ' + (resposta.mensagem || 'Tente novamente.'));
+        }
+      })
+      .catch(err => {
+        document.getElementById('overlayProcessando').style.display = 'none';
+        alert('Erro na comunicação com o servidor: ' + err);
       });
     }
   </script>
