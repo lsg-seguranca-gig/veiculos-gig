@@ -20,6 +20,7 @@
       --primary-btn-hover: #002244;
       --success-btn: #27ae60;
       --success-btn-hover: #219150;
+      --secondary-btn: #718096;
       --table-header-bg: #f8fafc;
       --table-row-hover: #f1f5f9;
       --badge-saida-bg: #feefc3;
@@ -41,6 +42,7 @@
       --primary-btn-hover: #14467a;
       --success-btn: #2e7d32;
       --success-btn-hover: #1b5e20;
+      --secondary-btn: #4a5568;
       --table-header-bg: #252525;
       --table-row-hover: #2a2a2a;
       --badge-saida-bg: #4a3800;
@@ -71,6 +73,7 @@
     .btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
     .btn-primary { background-color: var(--primary-btn); color: #ffffff; }
     .btn-success { background-color: var(--success-btn); color: #ffffff; }
+    .btn-secondary { background-color: var(--secondary-btn); color: #ffffff; }
     .table-container { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
     th, td { padding: 12px; border-bottom: 1px solid var(--border-color); }
@@ -80,6 +83,11 @@
     .badge-saida { background-color: var(--badge-saida-bg); color: var(--badge-saida-text); }
     .badge-retorno { background-color: var(--badge-retorno-bg); color: var(--badge-retorno-text); }
     .loading-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; color: #fff; font-size: 1.2rem; z-index: 999; }
+
+    /* Estilos do Modal de Retorno */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 1000; }
+    .modal-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; width: 100%; max-width: 450px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -143,10 +151,29 @@
     </div>
   </div>
 
+  <!-- Modal de Confirmação de Retorno -->
+  <div id="modalRetorno" class="modal-overlay">
+    <div class="card modal-card">
+      <div class="card-title">Registrar Retorno do Veículo</div>
+      <div class="form-group">
+        <label for="controladorRetornoSelect">Selecione o Controlador (Retorno)</label>
+        <select id="controladorRetornoSelect">
+          <option value="">Carregando...</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="fecharModalRetorno()">Cancelar</button>
+        <button class="btn btn-success" onclick="confirmarRetorno()">Confirmar Retorno</button>
+      </div>
+    </div>
+  </div>
+
   <div id="loading" class="loading-overlay">Processando...</div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbz9mkraqbunOd0wao6vVv3ICoS-yIXioAzi6cfT2gLIlTZm5V4ad7uleO4EekcUnDhRSA/exec";
+    
+    let idRegistroAtualParaRetorno = null;
 
     function toggleTheme() {
       const body = document.body;
@@ -182,8 +209,8 @@
         
         preencherCombo('veiculoSelect', dados.veiculos, 'Selecione o Veículo');
         preencherCombo('controladorSaidaSelect', dados.controladores, 'Selecione o Controlador');
+        preencherCombo('controladorRetornoSelect', dados.controladores, 'Selecione o Controlador');
         
-        // Popula Motorista e Auxiliar usando a lista vinda de Cadastros_Funcionarios
         preencherCombo('motoristaSelect', dados.funcionarios, 'Selecione o Motorista');
         preencherCombo('auxiliarSelect', dados.funcionarios, 'Nenhum / Selecione');
       } catch (err) {
@@ -193,6 +220,7 @@
 
     function preencherCombo(elementId, lista, labelPadrao) {
       const select = document.getElementById(elementId);
+      if (!select) return;
       select.innerHTML = `<option value="">${labelPadrao}</option>`;
       lista.forEach(item => {
         const option = document.createElement('option');
@@ -236,7 +264,7 @@
           <td>${reg.dataHoraRetorno || '-'}</td>
           <td>${reg.controladorRetorno || '-'}</td>
           <td>${reg.observacoes || '-'}</td>
-          <td>${emTransito ? `<button class="btn btn-success" onclick="registrarRetorno('${reg.id}')">Dar Retorno</button>` : 'OK'}</td>
+          <td>${emTransito ? `<button class="btn btn-success" onclick="abrirModalRetorno('${reg.id}')">Dar Retorno</button>` : 'OK'}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -268,16 +296,37 @@
       }
     }
 
-    async function registrarRetorno(idRegistro) {
-      const controladorRetorno = prompt("Informe o Controlador responsável pelo Retorno:");
-      if (!controladorRetorno) return;
+    /* LÓGICA DO MODAL DE RETORNO */
+    function abrirModalRetorno(idRegistro) {
+      idRegistroAtualParaRetorno = idRegistro;
+      document.getElementById('controladorRetornoSelect').value = '';
+      document.getElementById('modalRetorno').style.display = 'flex';
+    }
 
+    function fecharModalRetorno() {
+      idRegistroAtualParaRetorno = null;
+      document.getElementById('modalRetorno').style.display = 'none';
+    }
+
+    async function confirmarRetorno() {
+      const controladorRetorno = document.getElementById('controladorRetornoSelect').value;
+
+      if (!controladorRetorno) {
+        alert("Por favor, selecione o controlador responsável pelo retorno.");
+        return;
+      }
+
+      fecharModalRetorno();
       showLoading(true);
 
       try {
         await fetch(API_URL, {
           method: 'POST',
-          body: JSON.stringify({ acao: 'registrarRetorno', idRegistro, controladorRetorno })
+          body: JSON.stringify({
+            acao: 'registrarRetorno',
+            idRegistro: idRegistroAtualParaRetorno,
+            controladorRetorno
+          })
         });
         showLoading(false);
         carregarTabelaMovimentacao();
