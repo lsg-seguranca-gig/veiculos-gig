@@ -426,62 +426,133 @@
     }
 
     function exportarPDF() {
-      if (registrosFiltradosAtuais.length === 0) return alert('Sem dados para gerar PDF.');
+  if (registrosFiltradosAtuais.length === 0) {
+    return alert('Sem dados para gerar PDF.');
+  }
 
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('landscape', 'pt', 'a4');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('landscape', 'pt', 'a4');
 
-      doc.setFontSize(16);
-      doc.setTextColor(15, 23, 42);
-      doc.text("LSG Sky Chefs - Relatório de Movimentação de Veículos (Base GIG)", 40, 40);
+  // Instancia a imagem do logo que está na mesma raiz
+  const imgLogo = new Image();
+  imgLogo.src = './logo lsg.png';
 
-      doc.setFontSize(9);
-      doc.setTextColor(100, 116, 139);
-      doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Total de registros: ${registrosFiltradosAtuais.length}`, 40, 56);
+  imgLogo.onload = function () {
+    // Adiciona o Logo no canto superior esquerdo (X: 40, Y: 25, Largura: 90, Altura: 35)
+    doc.addImage(imgLogo, 'PNG', 40, 25, 90, 35);
 
-      const columns = [
-        { header: "ID", dataKey: "id" },
-        { header: "Status", dataKey: "status" },
-        { header: "Veículo", dataKey: "veiculo" },
-        { header: "Motorista", dataKey: "motorista" },
-        { header: "Auxiliares", dataKey: "auxiliares" },
-        { header: "Saída", dataKey: "saida" },
-        { header: "Ctrl Saída", dataKey: "ctrlSaida" },
-        { header: "Retorno", dataKey: "retorno" },
-        { header: "Ctrl Retorno", dataKey: "ctrlRetorno" },
-        { header: "Obs", dataKey: "obs" }
-      ];
+    // Título alinhado ao lado da imagem
+    doc.setFontSize(15);
+    doc.setTextColor(15, 23, 42);
+    doc.text("LSG Sky Chefs - Relatório de Movimentação de Veículos (Base GIG)", 140, 42);
 
-      const rows = registrosFiltradosAtuais.map(r => ({
-        id: r.id,
-        status: !r.dataHoraRetorno ? 'Em Trânsito' : 'Concluído',
-        veiculo: r.veiculo || '-',
-        motorista: r.motorista || '-',
-        auxiliares: r.auxiliares || '-',
-        saida: r.dataHoraSaida || '-',
-        ctrlSaida: r.controladorSaida || '-',
-        retorno: r.dataHoraRetorno || '-',
-        ctrlRetorno: r.controladorRetorno || '-',
-        obs: r.observacoes || '-'
-      }));
+    // Subtítulo / Metadados do relatório
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Total de registros: ${registrosFiltradosAtuais.length}`, 140, 56);
 
-      doc.autoTable({
-        columns: columns,
-        body: rows,
-        startY: 70,
-        styles: { fontSize: 8, cellPadding: 5 },
-        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
-        didDrawPage: function (data) {
-          const str = `Página ${doc.internal.getNumberOfPages()}`;
-          doc.setFontSize(8);
-          doc.setTextColor(150);
-          doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 20);
-        }
-      });
+    const columns = [
+      { header: "ID", dataKey: "id" },
+      { header: "Status", dataKey: "status" },
+      { header: "Veículo", dataKey: "veiculo" },
+      { header: "Motorista", dataKey: "motorista" },
+      { header: "Auxiliares", dataKey: "auxiliares" },
+      { header: "Saída", dataKey: "saida" },
+      { header: "Ctrl Saída", dataKey: "ctrlSaida" },
+      { header: "Retorno", dataKey: "retorno" },
+      { header: "Ctrl Retorno", dataKey: "ctrlRetorno" },
+      { header: "Obs", dataKey: "obs" }
+    ];
 
-      doc.save(`relatorio_veiculos_${new Date().toISOString().slice(0,10)}.pdf`);
-    }
+    const rows = registrosFiltradosAtuais.map(r => ({
+      id: r.id,
+      status: !r.dataHoraRetorno ? 'Em Trânsito' : 'Concluído',
+      veiculo: r.veiculo || '-',
+      motorista: r.motorista || '-',
+      auxiliares: r.auxiliares || '-',
+      saida: r.dataHoraSaida || '-',
+      ctrlSaida: r.controladorSaida || '-',
+      retorno: r.dataHoraRetorno || '-',
+      ctrlRetorno: r.controladorRetorno || '-',
+      obs: r.observacoes || '-'
+    }));
+
+    // Geração da Tabela abaixo do cabeçalho
+    doc.autoTable({
+      columns: columns,
+      body: rows,
+      startY: 75,
+      styles: { fontSize: 8, cellPadding: 5 },
+      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      didDrawPage: function (data) {
+        // Paginação no rodapé
+        const str = `Página ${doc.internal.getNumberOfPages()}`;
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 20);
+      }
+    });
+
+    doc.save(`relatorio_veiculos_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  // Trata falha de carregamento da imagem local se o caminho estiver inacessível
+  imgLogo.onerror = function () {
+    console.warn("Não foi possível carregar o logo no PDF. Gerando sem imagem...");
+    
+    doc.setFontSize(15);
+    doc.setTextColor(15, 23, 42);
+    doc.text("LSG Sky Chefs - Relatório de Movimentação de Veículos (Base GIG)", 40, 40);
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Total de registros: ${registrosFiltradosAtuais.length}`, 40, 56);
+
+    const columns = [
+      { header: "ID", dataKey: "id" },
+      { header: "Status", dataKey: "status" },
+      { header: "Veículo", dataKey: "veiculo" },
+      { header: "Motorista", dataKey: "motorista" },
+      { header: "Auxiliares", dataKey: "auxiliares" },
+      { header: "Saída", dataKey: "saida" },
+      { header: "Ctrl Saída", dataKey: "ctrlSaida" },
+      { header: "Retorno", dataKey: "retorno" },
+      { header: "Ctrl Retorno", dataKey: "ctrlRetorno" },
+      { header: "Obs", dataKey: "obs" }
+    ];
+
+    const rows = registrosFiltradosAtuais.map(r => ({
+      id: r.id,
+      status: !r.dataHoraRetorno ? 'Em Trânsito' : 'Concluído',
+      veiculo: r.veiculo || '-',
+      motorista: r.motorista || '-',
+      auxiliares: r.auxiliares || '-',
+      saida: r.dataHoraSaida || '-',
+      ctrlSaida: r.controladorSaida || '-',
+      retorno: r.dataHoraRetorno || '-',
+      ctrlRetorno: r.controladorRetorno || '-',
+      obs: r.observacoes || '-'
+    }));
+
+    doc.autoTable({
+      columns: columns,
+      body: rows,
+      startY: 70,
+      styles: { fontSize: 8, cellPadding: 5 },
+      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      didDrawPage: function (data) {
+        const str = `Página ${doc.internal.getNumberOfPages()}`;
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 20);
+      }
+    });
+
+    doc.save(`relatorio_veiculos_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+}
   </script>
 </body>
 </html>
