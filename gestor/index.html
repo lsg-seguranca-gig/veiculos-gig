@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Gestão & Relatórios - Base GIG</title>
+  <link rel="icon" href="icone lsg.ico" type="image/x-icon" />
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- SheetJS para exportação em Excel (.xlsx) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- jsPDF e jsPDF-AutoTable para geração de PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    /* RESET E ESTILOS BASE */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body { background-color: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* HEADER */
+    header { 
+      background-color: #ffffff; 
+      border-bottom: 1px solid #e2e8f0; 
+      padding: 1rem 2rem; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+    }
+    .logo-container { display: flex; align-items: center; gap: 16px; }
+    .logo-img { max-height: 44px; width: auto; object-fit: contain; }
+    .header-title { font-size: 1.15rem; font-weight: 700; color: #0f172a; }
+
+    /* LAYOUT DA PÁGINA */
+    main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+    /* SEÇÃO DE CARDS / KPIS */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+    .kpi-card { background: #ffffff; padding: 1.25rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .kpi-header { display: flex; justify-content: space-between; align-items: center; color: #64748b; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; }
+    .kpi-value { font-size: 1.75rem; font-weight: 700; color: #0f172a; }
+
+    /* CONTAINER DE FILTROS E BUSCA */
+    .filter-section { background: #ffffff; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: flex-end; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+    .form-control { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; background-color: #ffffff; }
+    .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+    /* BOTÕES */
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; grid-column: 1 / -1; margin-top: 0.5rem; justify-content: flex-end; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 16px; font-size: 0.875rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: background-color 0.2s; }
+    .btn-primary { background-color: #2563eb; color: #ffffff; }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-excel { background-color: #16a34a; color: #ffffff; }
+    .btn-excel:hover { background-color: #15803d; }
+    .btn-danger { background-color: #dc2626; color: #ffffff; }
+    .btn-danger:hover { background-color: #b91c1c; }
+    .btn-secondary { background-color: #64748b; color: #ffffff; }
+    .btn-secondary:hover { background-color: #475569; }
+    .btn-outline { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; }
+    .btn-outline:hover { background-color: #f1f5f9; }
+
+    /* TABELA DE DADOS */
+    .table-container { background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 900px; }
+    th, td { border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 0.85rem; }
+    th { background-color: #f8fafc; font-weight: 600; color: #475569; }
+    tr:hover { background-color: #f8fafc; }
+
+    /* STATUS BADGES */
+    .badge-transito { background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
+    .badge-concluido { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
+
+    #overlayProcessando { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); color: white; font-size: 18px; font-weight: 600; justify-content: center; align-items: center; z-index: 2000; }
+  </style>
+</head>
+<body>
+
+  <div id="overlayProcessando">Carregando dados...</div>
+
+  <!-- HEADER INSTITUCIONAL -->
+  <header>
+    <div class="logo-container">
+      <img src="./logo lsg.png" alt="Logo LSG Sky Chefs" class="logo-img">
+      <span class="header-title">Gestão & Relatórios de Veículos - Base GIG</span>
+    </div>
+    <button class="btn btn-outline" onclick="buscarDados()">
+      <i data-lucide="refresh-cw"></i> Atualizar Dados
+    </button>
+  </header>
+
+  <main>
+    <!-- SEÇÃO DE KPIS / RESUMO -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>TOTAL DE REGISTROS</span>
+          <i data-lucide="file-text"></i>
+        </div>
+        <div class="kpi-value" id="kpiTotal">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>EM TRÂNSITO</span>
+          <i data-lucide="truck"></i>
+        </div>
+        <div class="kpi-value" id="kpiTransito" style="color: #d97706;">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>CONCLUÍDOS</span>
+          <i data-lucide="check-circle-2"></i>
+        </div>
+        <div class="kpi-value" id="kpiConcluidos" style="color: #059669;">0</div>
+      </div>
+    </div>
+
+    <!-- FILTROS E PESQUISAS -->
+    <div class="filter-section">
+      <div class="filter-grid">
+        <div class="form-group">
+          <label for="filtroBusca">Buscar por Texto</label>
+          <input type="text" id="filtroBusca" class="form-control" placeholder="ID, Obs...">
+        </div>
+        
+        <div class="form-group">
+          <label for="filtroStatus">Status</label>
+          <select id="filtroStatus" class="form-control">
+            <option value="">Todos</option>
+            <option value="transito">Em Trânsito</option>
+            <option value="concluido">Concluído</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="filtroVeiculo">Veículo</label>
+          <select id="filtroVeiculo" class="form-control">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="filtroMotorista">Motorista</label>
+          <select id="filtroMotorista" class="form-control">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="filtroAuxiliar">Auxiliar</label>
+          <select id="filtroAuxiliar" class="form-control">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="filtroControlador">Controlador</label>
+          <select id="filtroControlador" class="form-control">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="filtroDataInicio">Data Inicial</label>
+          <input type="date" id="filtroDataInicio" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="filtroDataFim">Data Final</label>
+          <input type="date" id="filtroDataFim" class="form-control">
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="aplicarFiltros()">
+            <i data-lucide="search"></i> Buscar
+          </button>
+          <button class="btn btn-secondary" onclick="limparFiltros()">
+            <i data-lucide="x"></i> Limpar
+          </button>
+          <button class="btn btn-excel" onclick="exportarExcel()">
+            <i data-lucide="file-spreadsheet"></i> Exportar Excel
+          </button>
+          <button class="btn btn-danger" onclick="exportarPDF()">
+            <i data-lucide="file-down"></i> Exportar PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABELA DE RESULTADOS -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Status</th>
+            <th>Placa / Veículo</th>
+            <th>Motorista</th>
+            <th>Auxiliar(es)</th>
+            <th>Saída</th>
+            <th>Controlador Saída</th>
+            <th>Retorno</th>
+            <th>Controlador Retorno</th>
+            <th>Obs / Destino</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaRelatorio">
+          <tr><td colspan="10" style="text-align:center;">Carregando dados do servidor...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    const URL_PROXY = '/api/gas';
+    let todosRegistros = [];
+    let registrosFiltradosAtuais = [];
+
+    window.onload = function() {
+      buscarDados();
+    };
+
+    function buscarDados() {
+      document.getElementById('overlayProcessando').style.display = 'flex';
+      
+      fetch(`${URL_PROXY}?acao=obterMovimentacoes`)
+        .then(res => res.json())
+        .then(resposta => {
+          document.getElementById('overlayProcessando').style.display = 'none';
+          
+          let movimentacoes = [];
+          let opcoes = null;
+
+          if (Array.isArray(resposta)) {
+            movimentacoes = resposta;
+          } else if (resposta && resposta.movimentacoes) {
+            movimentacoes = resposta.movimentacoes;
+            opcoes = resposta.opcoes;
+          }
+
+          todosRegistros = (movimentacoes || []).filter(r => r.id && (r.veiculo || r.motorista));
+          
+          // Popula dropdowns usando os cadastros completos do banco de dados
+          popularDropdowns(opcoes, todosRegistros);
+          aplicarFiltros();
+        })
+        .catch(err => {
+          document.getElementById('overlayProcessando').style.display = 'none';
+          console.error(err);
+          document.getElementById('tabelaRelatorio').innerHTML = '<tr><td colspan="10" style="color:red; text-align:center;">Erro ao conectar ao servidor de dados.</td></tr>';
+        });
+    }
+
+    function popularDropdowns(opcoes, registros) {
+      let veiculosList = [];
+      let motoristasList = [];
+      let auxiliaresList = [];
+      let controladoresList = [];
+
+      // Caso o backend retorne as opções cadastradas em banco
+      if (opcoes) {
+        veiculosList = opcoes.veiculos || [];
+        motoristasList = opcoes.motoristas || opcoes.funcionarios || [];
+        auxiliaresList = opcoes.auxiliares || opcoes.funcionarios || [];
+        controladoresList = opcoes.controladores || [];
+      } else {
+        // Fallback: extrai dos registros caso as opções não venham estruturadas
+        const vSet = new Set(), mSet = new Set(), aSet = new Set(), cSet = new Set();
+        registros.forEach(r => {
+          if (r.veiculo) vSet.add(r.veiculo.trim());
+          if (r.motorista) mSet.add(r.motorista.trim());
+          if (r.auxiliares) r.auxiliares.split(',').forEach(aux => aux.trim() && aSet.add(aux.trim()));
+          if (r.controladorSaida) cSet.add(r.controladorSaida.trim());
+          if (r.controladorRetorno) cSet.add(r.controladorRetorno.trim());
+        });
+        veiculosList = Array.from(vSet);
+        motoristasList = Array.from(mSet);
+        auxiliaresList = Array.from(aSet);
+        controladoresList = Array.from(cSet);
+      }
+
+      preencherSelect('filtroVeiculo', veiculosList.sort());
+      preencherSelect('filtroMotorista', motoristasList.sort());
+      preencherSelect('filtroAuxiliar', auxiliaresList.sort());
+      preencherSelect('filtroControlador', controladoresList.sort());
+    }
+
+    function preencherSelect(elemId, lista) {
+      const select = document.getElementById(elemId);
+      const valorAtual = select.value;
+      select.innerHTML = '<option value="">Todos</option>';
+      lista.forEach(item => {
+        if (!item) return;
+        const option = document.createElement('option');
+        option.value = item;
+        option.textContent = item;
+        select.appendChild(option);
+      });
+      select.value = valorAtual;
+    }
+
+    function aplicarFiltros() {
+      const termo = document.getElementById('filtroBusca').value.toLowerCase();
+      const status = document.getElementById('filtroStatus').value;
+      const veiculoSel = document.getElementById('filtroVeiculo').value;
+      const motoristaSel = document.getElementById('filtroMotorista').value;
+      const auxiliarSel = document.getElementById('filtroAuxiliar').value;
+      const controladorSel = document.getElementById('filtroControlador').value;
+      const dataInicio = document.getElementById('filtroDataInicio').value;
+      const dataFim = document.getElementById('filtroDataFim').value;
+
+      registrosFiltradosAtuais = todosRegistros.filter(item => {
+        const textoCompleto = `${item.id} ${item.veiculo} ${item.observacoes}`.toLowerCase();
+        const passaTexto = !termo || textoCompleto.includes(termo);
+
+        const emTransito = !item.dataHoraRetorno;
+        let passaStatus = true;
+        if (status === 'transito') passaStatus = emTransito;
+        if (status === 'concluido') passaStatus = !emTransito;
+
+        const passaVeiculo = !veiculoSel || (item.veiculo && item.veiculo.trim().toLowerCase().includes(veiculoSel.trim().toLowerCase()));
+        const passaMotorista = !motoristaSel || (item.motorista && item.motorista.trim() === motoristaSel);
+        const passaAuxiliar = !auxiliarSel || (item.auxiliares && item.auxiliares.includes(auxiliarSel));
+        const passaControlador = !controladorSel || (item.controladorSaida === controladorSel || item.controladorRetorno === controladorSel);
+
+        let passaData = true;
+        if (item.dataHoraSaida) {
+          const partesData = item.dataHoraSaida.split(' ')[0].split('/');
+          if (partesData.length === 3) {
+            const dataReg = new Date(`${partesData[2]}-${partesData[1]}-${partesData[0]}`);
+            if (dataInicio && dataReg < new Date(dataInicio)) passaData = false;
+            if (dataFim && dataReg > new Date(dataFim + 'T23:59:59')) passaData = false;
+          }
+        }
+
+        return passaTexto && passaStatus && passaVeiculo && passaMotorista && passaAuxiliar && passaControlador && passaData;
+      });
+
+      renderizarTabela(registrosFiltradosAtuais);
+      atualizarKPIs(registrosFiltradosAtuais);
+    }
+
+    function renderizarTabela(registros) {
+      const tbody = document.getElementById('tabelaRelatorio');
+      tbody.innerHTML = '';
+
+      if (registros.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 2rem;">Nenhum registro encontrado para os filtros aplicados.</td></tr>';
+        return;
+      }
+
+      registros.forEach(r => {
+        const tr = document.createElement('tr');
+        const emTransito = !r.dataHoraRetorno;
+        tr.innerHTML = `
+          <td><strong>${r.id}</strong></td>
+          <td><span class="${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
+          <td>${r.veiculo || '-'}</td>
+          <td>${r.motorista || '-'}</td>
+          <td>${r.auxiliares || '-'}</td>
+          <td>${r.dataHoraSaida || '-'}</td>
+          <td>${r.controladorSaida || '-'}</td>
+          <td>${r.dataHoraRetorno || '-'}</td>
+          <td>${r.controladorRetorno || '-'}</td>
+          <td>${r.observacoes || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function atualizarKPIs(registros) {
+      const total = registros.length;
+      const transito = registros.filter(r => !r.dataHoraRetorno).length;
+      const concluidos = total - transito;
+
+      document.getElementById('kpiTotal').textContent = total;
+      document.getElementById('kpiTransito').textContent = transito;
+      document.getElementById('kpiConcluidos').textContent = concluidos;
+    }
+
+    function limparFiltros() {
+      document.getElementById('filtroBusca').value = '';
+      document.getElementById('filtroStatus').value = '';
+      document.getElementById('filtroVeiculo').value = '';
+      document.getElementById('filtroMotorista').value = '';
+      document.getElementById('filtroAuxiliar').value = '';
+      document.getElementById('filtroControlador').value = '';
+      document.getElementById('filtroDataInicio').value = '';
+      document.getElementById('filtroDataFim').value = '';
+      aplicarFiltros();
+    }
+
+    function exportarExcel() {
+      if (registrosFiltradosAtuais.length === 0) return alert('Sem dados para exportar.');
+
+      const dadosFormatados = registrosFiltradosAtuais.map(r => ({
+        "ID": r.id,
+        "Status": !r.dataHoraRetorno ? 'Em Trânsito' : 'Concluído',
+        "Placa / Veículo": r.veiculo || '',
+        "Motorista": r.motorista || '',
+        "Auxiliar(es)": r.auxiliares || '',
+        "Data/Hora Saída": r.dataHoraSaida || '',
+        "Controlador Saída": r.controladorSaida || '',
+        "Data/Hora Retorno": r.dataHoraRetorno || '',
+        "Controlador Retorno": r.controladorRetorno || '',
+        "Observações / Destino": r.observacoes || ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dadosFormatados);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Movimentações");
+
+      const maxCols = Object.keys(dadosFormatados[0]).map(key => ({
+        wch: Math.max(key.length, ...dadosFormatados.map(row => (row[key] ? row[key].toString().length : 0))) + 2
+      }));
+      worksheet['!cols'] = maxCols;
+
+      XLSX.writeFile(workbook, `relatorio_veiculos_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    function exportarPDF() {
+  if (registrosFiltradosAtuais.length === 0) {
+    return alert('Sem dados para gerar PDF.');
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('landscape', 'pt', 'a4');
+
+  // Instancia a imagem do logo que está na mesma raiz
+  const imgLogo = new Image();
+  imgLogo.src = './logo lsg.png';
+
+  imgLogo.onload = function () {
+    // Adiciona o Logo no canto superior esquerdo (X: 40, Y: 25, Largura: 90, Altura: 35)
+    doc.addImage(imgLogo, 'PNG', 40, 25, 90, 35);
+
+    // Título alinhado ao lado da imagem
+    doc.setFontSize(15);
+    doc.setTextColor(15, 23, 42);
+    doc.text("LSG Sky Chefs - Relatório de Movimentação de Veículos (Base GIG)", 140, 42);
+
+    // Subtítulo / Metadados do relatório
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Total de registros: ${registrosFiltradosAtuais.length}`, 140, 56);
+
+    const columns = [
+      { header: "ID", dataKey: "id" },
+      { header: "Status", dataKey: "status" },
+      { header: "Veículo", dataKey: "veiculo" },
+      { header: "Motorista", dataKey: "motorista" },
+      { header: "Auxiliares", dataKey: "auxiliares" },
+      { header: "Saída", dataKey: "saida" },
+      { header: "Ctrl Saída", dataKey: "ctrlSaida" },
+      { header: "Retorno", dataKey: "retorno" },
+      { header: "Ctrl Retorno", dataKey: "ctrlRetorno" },
+      { header: "Obs", dataKey: "obs" }
+    ];
+
+    const rows = registrosFiltradosAtuais.map(r => ({
+      id: r.id,
+      status: !r.dataHoraRetorno ? 'Em Trânsito' : 'Concluído',
+      veiculo: r.veiculo || '-',
+      motorista: r.motorista || '-',
+      auxiliares: r.auxiliares || '-',
+      saida: r.dataHoraSaida || '-',
+      ctrlSaida: r.controladorSaida || '-',
+      retorno: r.dataHoraRetorno || '-',
+      ctrlRetorno: r.controladorRetorno || '-',
+      obs: r.observacoes || '-'
+    }));
+
+    // Geração da Tabela abaixo do cabeçalho
+    doc.autoTable({
+      columns: columns,
+      body: rows,
+      startY: 75,
+      styles: { fontSize: 8, cellPadding: 5 },
+      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      didDrawPage: function (data) {
+        // Paginação no rodapé
+        const str = `Página ${doc.internal.getNumberOfPages()}`;
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 20);
+      }
+    });
+
+    doc.save(`relatorio_veiculos_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  // Trata falha de carregamento da imagem local se o caminho estiver inacessível
+  imgLogo.onerror = function () {
+    console.warn("Não foi possível carregar o logo no PDF. Gerando sem imagem...");
+    
+    doc.setFontSize(15);
+    doc.setTextColor(15, 23, 42);
+    doc.text("LSG Sky Chefs - Relatório de Movimentação de Veículos (Base GIG)", 40, 40);
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Total de registros: ${registrosFiltradosAtuais.length}`, 40, 56);
+
+    const columns = [
+      { header: "ID", dataKey: "id" },
+      { header: "Status", dataKey: "status" },
+      { header: "Veículo", dataKey: "veiculo" },
+      { header: "Motorista", dataKey: "motorista" },
+      { header: "Auxiliares", dataKey: "auxiliares" },
+      { header: "Saída", dataKey: "saida" },
+      { header: "Ctrl Saída", dataKey: "ctrlSaida" },
+      { header: "Retorno", dataKey: "retorno" },
+      { header: "Ctrl Retorno", dataKey: "ctrlRetorno" },
+      { header: "Obs", dataKey: "obs" }
+    ];
+
+    const rows = registrosFiltradosAtuais.map(r => ({
+      id: r.id,
+      status: !r.dataHoraRetorno ? 'Em Trânsito' : 'Concluído',
+      veiculo: r.veiculo || '-',
+      motorista: r.motorista || '-',
+      auxiliares: r.auxiliares || '-',
+      saida: r.dataHoraSaida || '-',
+      ctrlSaida: r.controladorSaida || '-',
+      retorno: r.dataHoraRetorno || '-',
+      ctrlRetorno: r.controladorRetorno || '-',
+      obs: r.observacoes || '-'
+    }));
+
+    doc.autoTable({
+      columns: columns,
+      body: rows,
+      startY: 70,
+      styles: { fontSize: 8, cellPadding: 5 },
+      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      didDrawPage: function (data) {
+        const str = `Página ${doc.internal.getNumberOfPages()}`;
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 20);
+      }
+    });
+
+    doc.save(`relatorio_veiculos_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+}
+  </script>
+</body>
+</html>
