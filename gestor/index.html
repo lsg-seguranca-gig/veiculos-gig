@@ -227,6 +227,21 @@
       buscarDados();
     };
 
+    // Função de formatação para dd/mm/yyyy hh:mm
+    function formatarDataHoraPDF(valorData) {
+      if (!valorData || valorData === '-') return '-';
+      const d = new Date(valorData);
+      if (isNaN(d.getTime())) return valorData;
+
+      const dia = String(d.getDate()).padStart(2, '0');
+      const mes = String(d.getMonth() + 1).padStart(2, '0');
+      const ano = d.getFullYear();
+      const horas = String(d.getHours()).padStart(2, '0');
+      const minutos = String(d.getMinutes()).padStart(2, '0');
+
+      return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+    }
+
     function buscarDados() {
       document.getElementById('overlayProcessando').style.display = 'flex';
       
@@ -426,133 +441,107 @@
     }
 
     function exportarPDF() {
-  if (registrosFiltradosAtuais.length === 0) {
-    return alert('Sem dados para gerar PDF.');
-  }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('landscape', 'pt', 'a4');
-
-  // Instancia a imagem do logo que está na mesma raiz
-  const imgLogo = new Image();
-  imgLogo.src = './logo lsg.png';
-
-  imgLogo.onload = function () {
-    // Adiciona o Logo no canto superior esquerdo (X: 40, Y: 25, Largura: 90, Altura: 35)
-    doc.addImage(imgLogo, 'PNG', 40, 25, 90, 35);
-
-    // Título alinhado ao lado da imagem
-    doc.setFontSize(15);
-    doc.setTextColor(15, 23, 42);
-    doc.text("LSG Sky Chefs - Relatório de Movimentação de Veículos (Base GIG)", 140, 42);
-
-    // Subtítulo / Metadados do relatório
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Total de registros: ${registrosFiltradosAtuais.length}`, 140, 56);
-
-    const columns = [
-      { header: "ID", dataKey: "id" },
-      { header: "Status", dataKey: "status" },
-      { header: "Veículo", dataKey: "veiculo" },
-      { header: "Motorista", dataKey: "motorista" },
-      { header: "Auxiliares", dataKey: "auxiliares" },
-      { header: "Saída", dataKey: "saida" },
-      { header: "Ctrl Saída", dataKey: "ctrlSaida" },
-      { header: "Retorno", dataKey: "retorno" },
-      { header: "Ctrl Retorno", dataKey: "ctrlRetorno" },
-      { header: "Obs", dataKey: "obs" }
-    ];
-
-    const rows = registrosFiltradosAtuais.map(r => ({
-      id: r.id,
-      status: !r.dataHoraRetorno ? 'Em Trânsito' : 'Concluído',
-      veiculo: r.veiculo || '-',
-      motorista: r.motorista || '-',
-      auxiliares: r.auxiliares || '-',
-      saida: r.dataHoraSaida || '-',
-      ctrlSaida: r.controladorSaida || '-',
-      retorno: r.dataHoraRetorno || '-',
-      ctrlRetorno: r.controladorRetorno || '-',
-      obs: r.observacoes || '-'
-    }));
-
-    // Geração da Tabela abaixo do cabeçalho
-    doc.autoTable({
-      columns: columns,
-      body: rows,
-      startY: 75,
-      styles: { fontSize: 8, cellPadding: 5 },
-      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      didDrawPage: function (data) {
-        // Paginação no rodapé
-        const str = `Página ${doc.internal.getNumberOfPages()}`;
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 20);
+      if (registrosFiltradosAtuais.length === 0) {
+        return alert('Sem dados para gerar PDF.');
       }
-    });
 
-    doc.save(`relatorio_veiculos_${new Date().toISOString().slice(0, 10)}.pdf`);
-  };
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('landscape', 'pt', 'a4');
 
-  // Trata falha de carregamento da imagem local se o caminho estiver inacessível
-  imgLogo.onerror = function () {
-    console.warn("Não foi possível carregar o logo no PDF. Gerando sem imagem...");
-    
-    doc.setFontSize(15);
-    doc.setTextColor(15, 23, 42);
-    doc.text("LSG Sky Chefs - Relatório de Movimentação de Veículos (Base GIG)", 40, 40);
+      // Instancia a imagem do logo que está na mesma raiz
+      const imgLogo = new Image();
+      imgLogo.src = './logo lsg.png';
 
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Total de registros: ${registrosFiltradosAtuais.length}`, 40, 56);
+      const columns = [
+        { header: "ID", dataKey: "id" },
+        { header: "Status", dataKey: "status" },
+        { header: "Veículo", dataKey: "veiculo" },
+        { header: "Motorista", dataKey: "motorista" },
+        { header: "Auxiliares", dataKey: "auxiliares" },
+        { header: "Saída", dataKey: "saida" },
+        { header: "Controlador de Acesso Saída", dataKey: "ctrlSaida" },
+        { header: "Retorno", dataKey: "retorno" },
+        { header: "Controlador de Saída Retorno", dataKey: "ctrlRetorno" },
+        { header: "Obs", dataKey: "obs" }
+      ];
 
-    const columns = [
-      { header: "ID", dataKey: "id" },
-      { header: "Status", dataKey: "status" },
-      { header: "Veículo", dataKey: "veiculo" },
-      { header: "Motorista", dataKey: "motorista" },
-      { header: "Auxiliares", dataKey: "auxiliares" },
-      { header: "Saída", dataKey: "saida" },
-      { header: "Ctrl Saída", dataKey: "ctrlSaida" },
-      { header: "Retorno", dataKey: "retorno" },
-      { header: "Ctrl Retorno", dataKey: "ctrlRetorno" },
-      { header: "Obs", dataKey: "obs" }
-    ];
+      const rows = registrosFiltradosAtuais.map(r => ({
+        id: r.id,
+        status: !r.dataHoraRetorno ? 'Em Trânsito' : 'Concluído',
+        veiculo: r.veiculo || '-',
+        motorista: r.motorista || '-',
+        auxiliares: r.auxiliares || '-',
+        saida: formatarDataHoraPDF(r.dataHoraSaida),
+        ctrlSaida: r.controladorSaida || '-',
+        retorno: formatarDataHoraPDF(r.dataHoraRetorno),
+        ctrlRetorno: r.controladorRetorno || '-',
+        obs: r.observacoes || '-'
+      }));
 
-    const rows = registrosFiltradosAtuais.map(r => ({
-      id: r.id,
-      status: !r.dataHoraRetorno ? 'Em Trânsito' : 'Concluído',
-      veiculo: r.veiculo || '-',
-      motorista: r.motorista || '-',
-      auxiliares: r.auxiliares || '-',
-      saida: r.dataHoraSaida || '-',
-      ctrlSaida: r.controladorSaida || '-',
-      retorno: r.dataHoraRetorno || '-',
-      ctrlRetorno: r.controladorRetorno || '-',
-      obs: r.observacoes || '-'
-    }));
+      imgLogo.onload = function () {
+        // Adiciona o Logo no canto superior esquerdo (X: 40, Y: 25, Largura: 90, Altura: 35)
+        doc.addImage(imgLogo, 'PNG', 40, 25, 90, 35);
 
-    doc.autoTable({
-      columns: columns,
-      body: rows,
-      startY: 70,
-      styles: { fontSize: 8, cellPadding: 5 },
-      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      didDrawPage: function (data) {
-        const str = `Página ${doc.internal.getNumberOfPages()}`;
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 20);
-      }
-    });
+        // Título alinhado ao lado da imagem
+        doc.setFontSize(15);
+        doc.setTextColor(15, 23, 42);
+        doc.text("LSG Sky Chefs - Relatório de Movimentação de Veículos (Base GIG)", 140, 42);
 
-    doc.save(`relatorio_veiculos_${new Date().toISOString().slice(0, 10)}.pdf`);
-  };
-}
+        // Subtítulo / Metadados do relatório
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Total de registros: ${registrosFiltradosAtuais.length}`, 140, 56);
+
+        // Geração da Tabela abaixo do cabeçalho
+        doc.autoTable({
+          columns: columns,
+          body: rows,
+          startY: 75,
+          styles: { fontSize: 8, cellPadding: 5 },
+          headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          didDrawPage: function (data) {
+            // Paginação no rodapé
+            const str = `Página ${doc.internal.getNumberOfPages()}`;
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 20);
+          }
+        });
+
+        doc.save(`relatorio_veiculos_${new Date().toISOString().slice(0, 10)}.pdf`);
+      };
+
+      // Trata falha de carregamento da imagem local se o caminho estiver inacessível
+      imgLogo.onerror = function () {
+        console.warn("Não foi possível carregar o logo no PDF. Gerando sem imagem...");
+        
+        doc.setFontSize(15);
+        doc.setTextColor(15, 23, 42);
+        doc.text("LSG Sky Chefs - Relatório de Movimentação de Veículos (Base GIG)", 40, 40);
+
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Total de registros: ${registrosFiltradosAtuais.length}`, 40, 56);
+
+        doc.autoTable({
+          columns: columns,
+          body: rows,
+          startY: 70,
+          styles: { fontSize: 8, cellPadding: 5 },
+          headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          didDrawPage: function (data) {
+            const str = `Página ${doc.internal.getNumberOfPages()}`;
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 20);
+          }
+        });
+
+        doc.save(`relatorio_veiculos_${new Date().toISOString().slice(0, 10)}.pdf`);
+      };
+    }
   </script>
 </body>
 </html>
