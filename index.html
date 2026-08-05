@@ -28,59 +28,49 @@
     .header-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
 
     /* CONTAINER PRINCIPAL */
-    main { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+    main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
 
-    /* NAVEGAÇÃO POR ABAS */
-    .nav-tabs { display: flex; gap: 8px; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; }
-    .tab-btn { 
-      padding: 12px 20px; 
-      background: none; 
-      border: none; 
-      border-bottom: 3px solid transparent; 
-      font-size: 0.95rem; 
-      font-weight: 600; 
-      color: #64748b; 
-      cursor: pointer; 
-      display: flex; 
-      align-items: center; 
-      gap: 8px;
-      margin-bottom: -2px;
-      transition: all 0.2s;
-    }
-    .tab-btn:hover { color: #2563eb; }
-    .tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
-
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    /* CARD DE FORMULÁRIO E CONTEÚDO */
+    /* CARDS E FORMULÁRIOS */
     .card { background: #ffffff; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; color: #0f172a; display: flex; align-items: center; gap: 8px; }
 
-    /* FORMULÁRIOS */
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full-width { grid-column: 1 / -1; }
     .form-group label { font-size: 0.85rem; font-weight: 600; color: #475569; }
-    .form-control { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; background-color: #ffffff; }
+    .form-control { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; background-color: #ffffff; }
     .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-    textarea.form-control { resize: vertical; min-height: 80px; }
+    textarea.form-control { resize: vertical; min-height: 60px; }
 
     /* BOTÕES */
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: background-color 0.2s; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 16px; font-size: 0.875rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: background-color 0.2s; }
     .btn-primary { background-color: #2563eb; color: #ffffff; }
     .btn-primary:hover { background-color: #1d4ed8; }
     .btn-success { background-color: #16a34a; color: #ffffff; }
     .btn-success:hover { background-color: #15803d; }
     .btn-outline { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; }
     .btn-outline:hover { background-color: #f1f5f9; }
+    .btn-secondary { background-color: #64748b; color: #ffffff; }
+    .btn-secondary:hover { background-color: #475569; }
+    .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
 
     /* TABELA DE REGISTROS */
     .table-container { background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    th, td { border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 0.85rem; }
+    table { width: 100%; border-collapse: collapse; min-width: 900px; }
+    th, td { border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 0.85rem; vertical-align: middle; }
     th { background-color: #f8fafc; font-weight: 600; color: #475569; }
     tr:hover { background-color: #f8fafc; }
+
+    /* BADGES DE STATUS */
+    .badge-transito { background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
+    .badge-concluido { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
+
+    /* JANELA MODAL */
+    .modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-content { background: #ffffff; padding: 1.75rem; border-radius: 8px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .modal-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+    .modal-footer { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 8px; }
 
     /* OVERLAY DE CARREGAMENTO */
     #overlayProcessando { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); color: white; font-size: 18px; font-weight: 600; justify-content: center; align-items: center; z-index: 2000; }
@@ -97,141 +87,123 @@
       <span class="header-title">Controle de Saída e Retorno dos Veículos de Atendimento - Base GIG</span>
     </div>
     <button class="btn btn-outline" onclick="buscarDados()">
-      <i data-lucide="refresh-cw"></i> Atualizar
+      <i data-lucide="refresh-cw"></i> Atualizar Tabela
     </button>
   </header>
 
   <main>
-    <!-- BARRA DE NAVEGAÇÃO -->
-    <nav class="nav-tabs">
-      <button class="tab-btn active" onclick="trocarAba('saida')">
-        <i data-lucide="log-out"></i> Registrar Saída
-      </button>
-      <button class="tab-btn" onclick="trocarAba('retorno')">
-        <i data-lucide="log-in"></i> Registrar Retorno
-      </button>
-      <button class="tab-btn" onclick="trocarAba('atendimento')">
-        <i data-lucide="truck"></i> Veículos em Atendimento / Retorno
-      </button>
-    </nav>
-
-    <!-- ABA 1: REGISTRAR SAÍDA -->
-    <section id="tab-saida" class="tab-content active">
-      <div class="card">
-        <h2 class="card-title"><i data-lucide="log-out"></i> Lançamento de Saída de Veículo</h2>
-        <form id="formSaida" onsubmit="salvarSaida(event)">
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="saidaVeiculo">Veículo *</label>
-              <select id="saidaVeiculo" class="form-control" required>
-                <option value="">Selecione...</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="saidaMotorista">Motorista *</label>
-              <select id="saidaMotorista" class="form-control" required>
-                <option value="">Selecione...</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="saidaAuxiliares">Auxiliar(es)</label>
-              <select id="saidaAuxiliares" class="form-control">
-                <option value="">Nenhum / Selecione...</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="saidaControlador">Controlador de Saída *</label>
-              <select id="saidaControlador" class="form-control" required>
-                <option value="">Selecione...</option>
-              </select>
-            </div>
-
-            <div class="form-group full-width">
-              <label for="saidaObs">Observações / Destino</label>
-              <textarea id="saidaObs" class="form-control" placeholder="Informe voo, posição, destino ou observações relevantes..."></textarea>
-            </div>
+    <!-- FORMULÁRIO DE REGISTRO DE SAÍDA -->
+    <div class="card">
+      <h2 class="card-title"><i data-lucide="log-out"></i> Registrar Nova Saída de Veículo</h2>
+      <form id="formSaida" onsubmit="salvarSaida(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="saidaVeiculo">Veículo *</label>
+            <select id="saidaVeiculo" class="form-control" required>
+              <option value="">Selecione...</option>
+            </select>
           </div>
 
-          <div style="margin-top: 1.25rem; text-align: right;">
-            <button type="submit" class="btn btn-primary">
-              <i data-lucide="check"></i> Confirmar Saída
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
-
-    <!-- ABA 2: REGISTRAR RETORNO -->
-    <section id="tab-retorno" class="tab-content">
-      <div class="card">
-        <h2 class="card-title"><i data-lucide="log-in"></i> Lançamento de Retorno de Veículo</h2>
-        <form id="formRetorno" onsubmit="salvarRetorno(event)">
-          <div class="form-grid">
-            <div class="form-group full-width">
-              <label for="retornoId">Selecione o Veículo em Trânsito *</label>
-              <select id="retornoId" class="form-control" required>
-                <option value="">Selecione um veículo que está em atendimento...</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="retornoControlador">Controlador de Retorno *</label>
-              <select id="retornoControlador" class="form-control" required>
-                <option value="">Selecione...</option>
-              </select>
-            </div>
-
-            <div class="form-group full-width">
-              <label for="retornoObs">Observações do Retorno</label>
-              <textarea id="retornoObs" class="form-control" placeholder="Observações adicionais do retorno (opcional)..."></textarea>
-            </div>
+          <div class="form-group">
+            <label for="saidaMotorista">Motorista *</label>
+            <select id="saidaMotorista" class="form-control" required>
+              <option value="">Selecione...</option>
+            </select>
           </div>
 
-          <div style="margin-top: 1.25rem; text-align: right;">
-            <button type="submit" class="btn btn-success">
-              <i data-lucide="check-circle-2"></i> Confirmar Retorno
-            </button>
+          <div class="form-group">
+            <label for="saidaAuxiliares">Auxiliar(es)</label>
+            <select id="saidaAuxiliares" class="form-control">
+              <option value="">Nenhum / Selecione...</option>
+            </select>
           </div>
-        </form>
-      </div>
-    </section>
 
-    <!-- ABA 3: VEÍCULOS EM ATENDIMENTO / HISTÓRICO -->
-    <section id="tab-atendimento" class="tab-content">
-      <div class="card">
-        <h2 class="card-title"><i data-lucide="truck"></i> Painel de Veículos em Atendimento e Retorno</h2>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Status</th>
-                <th>Veículo</th>
-                <th>Motorista</th>
-                <th>Auxiliar(es)</th>
-                <th>Data/Hora Saída</th>
-                <th>Controlador Saída</th>
-                <th>Data/Hora Retorno</th>
-                <th>Controlador Retorno</th>
-                <th>Observações</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaRelatorio">
-              <tr><td colspan="10" style="text-align:center;">Carregando dados...</td></tr>
-            </tbody>
-          </table>
+          <div class="form-group">
+            <label for="saidaControlador">Controlador de Saída *</label>
+            <select id="saidaControlador" class="form-control" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="saidaObs">Observações / Destino</label>
+            <textarea id="saidaObs" class="form-control" placeholder="Voo, posição ou destino..."></textarea>
+          </div>
         </div>
+
+        <div style="margin-top: 1rem; text-align: right;">
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="check"></i> Confirmar Saída
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- TABELA RELATÓRIO / PAINEL DE ACOMPANHAMENTO -->
+    <div class="card">
+      <h2 class="card-title"><i data-lucide="truck"></i> Veículos em Atendimento / Histórico</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Status</th>
+              <th>Veículo</th>
+              <th>Motorista</th>
+              <th>Auxiliar(es)</th>
+              <th>Data/Hora Saída</th>
+              <th>Controlador Saída</th>
+              <th>Data/Hora Retorno</th>
+              <th>Controlador Retorno</th>
+              <th>Observações</th>
+              <th style="text-align: center;">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaRelatorio">
+            <tr><td colspan="11" style="text-align:center;">Carregando dados...</td></tr>
+          </tbody>
+        </table>
       </div>
-    </section>
+    </div>
   </main>
+
+  <!-- MODAL DE REGISTRO DE RETORNO -->
+  <div id="modalRetorno" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title"><i data-lucide="log-in"></i> Registrar Retorno</h3>
+        <button class="btn btn-outline btn-sm" onclick="fecharModalRetorno()" style="border:none; cursor:pointer;">&times;</button>
+      </div>
+      <form id="formModalRetorno" onsubmit="salvarRetornoModal(event)">
+        <input type="hidden" id="modalRetornoId">
+        
+        <p style="font-size: 0.88rem; color: #475569; margin-bottom: 1rem;" id="modalInfoVeiculo"></p>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="modalControladorRetorno">Controlador de Retorno *</label>
+          <select id="modalControladorRetorno" class="form-control" required>
+            <option value="">Selecione o Controlador...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="modalObsRetorno">Observações do Retorno</label>
+          <textarea id="modalObsRetorno" class="form-control" placeholder="Observações adicionais (opcional)..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="fecharModalRetorno()">Cancelar</button>
+          <button type="submit" class="btn btn-success">
+            <i data-lucide="check-circle-2"></i> Confirmar Retorno
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script>
     lucide.createIcons();
 
-    // Defina a URL proxy local ou a URL direta do Apps Script
     const URL_PROXY = '/api/gas'; 
     let todosRegistros = [];
     let opcoesGlobais = null;
@@ -240,31 +212,13 @@
       buscarDados();
     };
 
-    function trocarAba(nomeAba) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(sec => sec.classList.remove('active'));
-
-      if (nomeAba === 'saida') {
-        document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        document.getElementById('tab-saida').classList.add('active');
-      } else if (nomeAba === 'retorno') {
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.getElementById('tab-retorno').classList.add('active');
-      } else if (nomeAba === 'atendimento') {
-        document.querySelectorAll('.tab-btn')[2].classList.add('active');
-        document.getElementById('tab-atendimento').classList.add('active');
-      }
-    }
-
-    // BUSCA SEGURA DE DADOS TRATANDO OS DOIS FORMATOS DE RETORNO
+    // BUSCA DE DADOS COM SUPORTE AOS DOIS FORMATOS DE RESPOSTA
     function buscarDados() {
       document.getElementById('overlayProcessando').style.display = 'flex';
       
       fetch(`${URL_PROXY}?acao=obterMovimentacoes`)
         .then(res => {
-          if (!res.ok) {
-            throw new Error(`Erro HTTP: status ${res.status}`);
-          }
+          if (!res.ok) throw new Error(`Erro HTTP: status ${res.status}`);
           return res.json();
         })
         .then(resposta => {
@@ -273,7 +227,6 @@
           let movimentacoes = [];
           let opcoes = null;
 
-          // Suporta objeto { movimentacoes, opcoes } ou array direto
           if (resposta && resposta.movimentacoes) {
             movimentacoes = resposta.movimentacoes;
             opcoes = resposta.opcoes;
@@ -287,15 +240,15 @@
           opcoesGlobais = opcoes;
 
           popularDropdownsFormularios(opcoesGlobais, todosRegistros);
-          renderizarTabelaAtendimento(todosRegistros);
+          renderizarTabela(todosRegistros);
         })
         .catch(err => {
           document.getElementById('overlayProcessando').style.display = 'none';
-          console.error("Erro ao buscar dados:", err);
+          console.error("Erro ao carregar dados:", err);
           document.getElementById('tabelaRelatorio').innerHTML = `
             <tr>
-              <td colspan="10" style="color:#dc2626; text-align:center; padding: 1.5rem;">
-                Erro ao carregar dados da planilha. Verifique a URL do Web App ou as permissões de acesso.<br>
+              <td colspan="11" style="color:#dc2626; text-align:center; padding: 1.5rem;">
+                Erro ao carregar dados da planilha. Verifique a URL do Web App.<br>
                 <small style="color: #64748b;">Detalhe: ${err.message}</small>
               </td>
             </tr>`;
@@ -303,10 +256,7 @@
     }
 
     function popularDropdownsFormularios(opcoes, registros) {
-      let veiculos = [];
-      let motoristas = [];
-      let auxiliares = [];
-      let controladores = [];
+      let veiculos = [], motoristas = [], auxiliares = [], controladores = [];
 
       if (opcoes) {
         veiculos = opcoes.veiculos || [];
@@ -330,21 +280,9 @@
 
       preencherSelect('saidaVeiculo', veiculos.sort(), 'Selecione o Veículo...');
       preencherSelect('saidaMotorista', motoristas.sort(), 'Selecione o Motorista...');
-      preencherSelect('saidaAuxiliares', auxiliares.sort(), 'Nenhum / Selecione o Auxiliar...');
+      preencherSelect('saidaAuxiliares', auxiliares.sort(), 'Nenhum / Selecione...');
       preencherSelect('saidaControlador', controladores.sort(), 'Selecione o Controlador...');
-      preencherSelect('retornoControlador', controladores.sort(), 'Selecione o Controlador...');
-
-      // Popula a lista de seleção da aba de Retorno com veículos que estão em trânsito
-      const selectRetorno = document.getElementById('retornoId');
-      selectRetorno.innerHTML = '<option value="">Selecione um veículo que está em atendimento...</option>';
-      const emTransito = registros.filter(r => !r.dataHoraRetorno);
-
-      emTransito.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = r.id;
-        opt.textContent = `ID #${r.id} - ${r.veiculo} (Motorista: ${r.motorista || 'N/I'}) - Saída: ${r.dataHoraSaida || 'N/I'}`;
-        selectRetorno.appendChild(opt);
-      });
+      preencherSelect('modalControladorRetorno', controladores.sort(), 'Selecione o Controlador...');
     }
 
     function preencherSelect(elemId, lista, textoPadrao) {
@@ -359,25 +297,22 @@
       });
     }
 
-    function renderizarTabelaAtendimento(registros) {
+    function renderizarTabela(registros) {
       const tbody = document.getElementById('tabelaRelatorio');
       tbody.innerHTML = '';
 
       if (registros.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 2rem;">Nenhuma movimentação registrada.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 2rem;">Nenhum registro de movimentação.</td></tr>';
         return;
       }
 
       registros.forEach(r => {
         const tr = document.createElement('tr');
         const emTransito = !r.dataHoraRetorno;
+        
         tr.innerHTML = `
-          <td><strong>${r.id}</strong></td>
-          <td>
-            <span style="background:${emTransito ? '#fef3c7' : '#d1fae5'}; color:${emTransito ? '#92400e' : '#065f46'}; padding:4px 8px; border-radius:4px; font-weight:600; font-size:0.75rem;">
-              ${emTransito ? 'Em Trânsito' : 'Concluído'}
-            </span>
-          </td>
+          <td><strong>#${r.id}</strong></td>
+          <td><span class="${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
           <td>${r.veiculo || '-'}</td>
           <td>${r.motorista || '-'}</td>
           <td>${r.auxiliares || '-'}</td>
@@ -386,11 +321,32 @@
           <td>${r.dataHoraRetorno || '-'}</td>
           <td>${r.controladorRetorno || '-'}</td>
           <td>${r.observacoes || '-'}</td>
+          <td style="text-align: center;">
+            ${emTransito 
+              ? `<button class="btn btn-success btn-sm" onclick="abrirModalRetorno('${r.id}', '${r.veiculo}', '${r.motorista}')"><i data-lucide="log-in"></i> Retorno</button>`
+              : '<span style="color:#94a3b8; font-size: 0.8rem;">Concluído</span>'
+            }
+          </td>
         `;
         tbody.appendChild(tr);
       });
+
+      lucide.createIcons();
     }
 
+    // ABRIR E FECHAR MODAL DE RETORNO
+    function abrirModalRetorno(id, veiculo, motorista) {
+      document.getElementById('modalRetornoId').value = id;
+      document.getElementById('modalInfoVeiculo').innerHTML = `Registrando retorno para o veículo <strong>${veiculo}</strong> (ID #${id}) - Motorista: <strong>${motorista}</strong>`;
+      document.getElementById('formModalRetorno').reset();
+      document.getElementById('modalRetorno').style.display = 'flex';
+    }
+
+    function fecharModalRetorno() {
+      document.getElementById('modalRetorno').style.display = 'none';
+    }
+
+    // SALVAR SAÍDA
     function salvarSaida(event) {
       event.preventDefault();
       document.getElementById('overlayProcessando').style.display = 'flex';
@@ -413,7 +369,6 @@
       .then(resposta => {
         document.getElementById('overlayProcessando').style.display = 'none';
         if (resposta.status === 'sucesso') {
-          alert('Saída registrada com sucesso!');
           document.getElementById('formSaida').reset();
           buscarDados();
         } else {
@@ -422,19 +377,21 @@
       })
       .catch(err => {
         document.getElementById('overlayProcessando').style.display = 'none';
-        alert('Erro na comunicação com o servidor: ' + err.message);
+        alert('Erro de comunicação: ' + err.message);
       });
     }
 
-    function salvarRetorno(event) {
+    // SALVAR RETORNO VIA MODAL
+    function salvarRetornoModal(event) {
       event.preventDefault();
+      fecharModalRetorno();
       document.getElementById('overlayProcessando').style.display = 'flex';
 
       const payload = {
         acao: 'registrarRetorno',
-        id: document.getElementById('retornoId').value,
-        controladorRetorno: document.getElementById('retornoControlador').value,
-        observacoes: document.getElementById('retornoObs').value
+        id: document.getElementById('modalRetornoId').value,
+        controladorRetorno: document.getElementById('modalControladorRetorno').value,
+        observacoes: document.getElementById('modalObsRetorno').value
       };
 
       fetch(URL_PROXY, {
@@ -446,8 +403,6 @@
       .then(resposta => {
         document.getElementById('overlayProcessando').style.display = 'none';
         if (resposta.status === 'sucesso') {
-          alert('Retorno registrado com sucesso!');
-          document.getElementById('formRetorno').reset();
           buscarDados();
         } else {
           alert('Erro ao registrar retorno: ' + resposta.mensagem);
@@ -455,7 +410,7 @@
       })
       .catch(err => {
         document.getElementById('overlayProcessando').style.display = 'none';
-        alert('Erro na comunicação com o servidor: ' + err.message);
+        alert('Erro de comunicação: ' + err.message);
       });
     }
   </script>
