@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Gestor - Controle de Viaturas LSG GIG</title>
+  <link rel="icon" href="icone lsg.ico" type="image/x-icon" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --bg-body: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border-color: #e5e7eb;
+      --primary: #002b49;
+      --primary-hover: #00406c;
+      --accent: #e30613;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --table-header: #f8fafc;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    }
+
+    [data-theme="dark"] {
+      --bg-body: #0f172a;
+      --card-bg: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --accent: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --table-header: #0f172a;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      padding: 24px 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1440px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 20px 24px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-top: 5px solid var(--accent);
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-logo {
+      height: 48px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .header-title h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .header-title p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-nav {
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* KPIs Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .kpi-title {
+      font-size: 0.825rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Layout dos Filtros */
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    input, select {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-excel { background-color: #107c41; color: white; }
+    .btn-pdf { background-color: var(--accent); color: white; }
+    .btn-reset { background-color: var(--text-muted); color: white; }
+
+    /* Tabela */
+    .table-container { overflow-x: auto; margin-top: 16px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    th {
+      background-color: var(--table-header);
+      color: var(--text-muted);
+      font-weight: 700;
+      padding: 12px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .badge-transito { background-color: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .badge-concluido { background-color: rgba(16, 185, 129, 0.15); color: var(--success); }
+
+    /* Estilos do Marcador Visual de Combustível */
+    .fuel-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 90px;
+    }
+
+    .fuel-text {
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+
+    .fuel-bar-bg {
+      width: 100%;
+      height: 8px;
+      background-color: var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .fuel-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .fuel-img-icon {
+      max-width: 80px;
+      max-height: 28px;
+      object-fit: contain;
+      display: block;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <header>
+      <div class="header-brand">
+        <img src="../lsg logo.png" alt="LSG Logo" class="header-logo" id="logoImg">
+        <div class="header-title">
+          <h1>Painel de Controle do Gestor - Base GIG</h1>
+          <p>Relatórios, Indicadores e Monitoramento de Frota</p>
+        </div>
+      </div>
+      <a href="../" class="btn-nav">⬅️ Voltar ao Registro</a>
+    </header>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-title">Total de Saídas</span>
+        <span class="kpi-value" id="kpiTotal">0</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-title">Em Trânsito</span>
+        <span class="kpi-value" id="kpiTransito" style="color: var(--warning);">0</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-title">Concluídos</span>
+        <span class="kpi-value" id="kpiConcluidos" style="color: var(--success);">0</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-title">KM Percorridos</span>
+        <span class="kpi-value" id="kpiKmTotal">0 km</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔍 Filtros e Relatórios</div>
+
+      <div class="filter-grid">
+        <div class="filter-group">
+          <label>Data Inicial</label>
+          <input type="date" id="filterDataInicio" onchange="aplicarFiltros()">
+        </div>
+
+        <div class="filter-group">
+          <label>Data Final</label>
+          <input type="date" id="filterDataFim" onchange="aplicarFiltros()">
+        </div>
+
+        <div class="filter-group">
+          <label>Status</label>
+          <select id="filterStatus" onchange="aplicarFiltros()">
+            <option value="">Todos</option>
+            <option value="EM_TRANSITO">Em Trânsito</option>
+            <option value="CONCLUIDO">Concluído</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Veículo / Placa</label>
+          <select id="filterVeiculo" onchange="aplicarFiltros()">
+            <option value="">Todos os veículos...</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Motorista</label>
+          <select id="filterMotorista" onchange="aplicarFiltros()">
+            <option value="">Todos os motoristas...</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Controlador</label>
+          <select id="filterControlador" onchange="aplicarFiltros()">
+            <option value="">Todos os controladores...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-excel" onclick="exportarExcel()">📊 Exportar Excel (.xlsx)</button>
+        <button class="btn btn-pdf" onclick="exportarPDF()">📄 Gerar PDF Oficial</button>
+        <button class="btn btn-reset" onclick="limparFiltros()">🔄 Limpar Filtros</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Registros Filtrados</div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Veículo</th>
+              <th>Motorista</th>
+              <th>Saída (Data / Hora / KM)</th>
+              <th>Comb. Saída</th>
+              <th>Retorno (Hora / KM)</th>
+              <th>Comb. Retorno</th>
+              <th>KM Percorridos</th>
+              <th>Controladores (S / R)</th>
+              <th>Obs / Destino</th>
+            </tr>
+          </thead>
+          <tbody id="gestorTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "/api/gas";
+    let todosRegistros = [];
+    let registrosFiltrados = [];
+
+    function formatarData(valorData) {
+      if (!valorData || valorData === '-') return '-';
+
+      // Tratamento direto de string ISO para evitar timezone offset
+      if (typeof valorData === 'string') {
+        const dataApenas = valorData.split('T')[0];
+        const partes = dataApenas.split('-');
+        if (partes.length === 3) {
+          return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+      }
+
+      const d = new Date(valorData);
+      if (isNaN(d.getTime())) return valorData;
+
+      const dia = String(d.getUTCDate()).padStart(2, '0');
+      const mes = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const ano = d.getUTCFullYear();
+
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    // Tratamento direto de hora ignorando conversões de timezone automático
+    function formatarHora(valorHora) {
+      if (!valorHora || valorHora === '-') return '-';
+
+      const strHora = String(valorHora).trim();
+
+      // Caso venha como ISO string de data completada (ex: 2026-08-18T16:40:00Z)
+      if (strHora.includes('T')) {
+        const horaParte = strHora.split('T')[1];
+        if (horaParte) {
+          const hhmm = horaParte.split(':');
+          if (hhmm.length >= 2) {
+            return `${hhmm[0].padStart(2, '0')}:${hhmm[1].padStart(2, '0')}`;
+          }
+        }
+      }
+
+      // Caso venha no formato padrão "HH:mm" ou "HH:mm:ss"
+      if (strHora.includes(':')) {
+        const partes = strHora.split(':');
+        return `${partes[0].padStart(2, '0')}:${partes[1].padStart(2, '0')}`;
+      }
+
+      return strHora;
+    }
+
+    function extrairPorcentagemCombustivel(valor) {
+      if (!valor || valor === '-') return 0;
+      let texto = String(valor).toLowerCase().trim();
+
+      if (texto.includes('100') || texto.includes('cheio') || texto.includes('1/1') || texto.includes('4/4')) return 100;
+      if (texto.includes('75') || texto.includes('3/4')) return 75;
+      if (texto.includes('50') || texto.includes('1/2') || texto.includes('meio')) return 50;
+      if (texto.includes('25') || texto.includes('1/4')) return 25;
+      if (texto.includes('reserva') || texto.includes('0')) return 10;
+
+      const num = parseInt(texto.replace(/\D/g, ''));
+      return !isNaN(num) ? Math.min(Math.max(num, 0), 100) : 50;
+    }
+
+    function obterCorCombustivel(porcentagem) {
+      if (porcentagem <= 20) return '#ef4444';
+      if (porcentagem <= 50) return '#f59e0b';
+      return '#10b981';
+    }
+
+    function renderizarMarcadorCombustivel(valorCombustivel, urlImagem) {
+      if (!valorCombustivel || valorCombustivel === '-') return '-';
+
+      const porcentagem = extrairPorcentagemCombustivel(valorCombustivel);
+      const corBarra = obterCorCombustivel(porcentagem);
+
+      let htmlImagem = '';
+      if (urlImagem && urlImagem.trim() !== '' && urlImagem !== '-') {
+        htmlImagem = `<img src="${urlImagem}" alt="Marcador" class="fuel-img-icon" onerror="this.style.display='none'">`;
+      }
+
+      return `
+        <div class="fuel-container">
+          <span class="fuel-text">⛽ ${valorCombustivel}</span>
+          <div class="fuel-bar-bg" title="Nível: ${porcentagem}%">
+            <div class="fuel-bar-fill" style="width: ${porcentagem}%; background-color: ${corBarra};"></div>
+          </div>
+          ${htmlImagem}
+        </div>
+      `;
+    }
+
+    function calcularKmPercorrido(kmSaida, kmChegada) {
+      if (!kmSaida || !kmChegada) return '-';
+      const kSaida = parseFloat(kmSaida);
+      const kChegada = parseFloat(kmChegada);
+      if (isNaN(kSaida) || isNaN(kChegada)) return '-';
+      const dif = kChegada - kSaida;
+      return dif >= 0 ? `${dif} km` : '-';
+    }
+
+    async function loadData() {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+
+        if (data.registros && Array.isArray(data.registros)) {
+          todosRegistros = data.registros;
+          registrosFiltrados = [...todosRegistros];
+        }
+
+        populateDropdowns(data);
+        aplicarFiltros();
+      } catch (error) {
+        console.error("Erro ao carregar dados da API Vercel:", error);
+      }
+    }
+
+    function populateDropdowns(data) {
+      const selectVeiculo = document.getElementById('filterVeiculo');
+      const selectMotorista = document.getElementById('filterMotorista');
+      const selectControlador = document.getElementById('filterControlador');
+
+      if (data.veiculos) {
+        selectVeiculo.innerHTML = '<option value="">Todos os veículos...</option>';
+        data.veiculos.forEach(v => selectVeiculo.innerHTML += `<option value="${v}">${v}</option>`);
+      }
+
+      if (data.motoristas) {
+        selectMotorista.innerHTML = '<option value="">Todos os motoristas...</option>';
+        data.motoristas.forEach(m => selectMotorista.innerHTML += `<option value="${m}">${m}</option>`);
+      }
+
+      if (data.controladores) {
+        selectControlador.innerHTML = '<option value="">Todos os controladores...</option>';
+        data.controladores.forEach(c => selectControlador.innerHTML += `<option value="${c}">${c}</option>`);
+      }
+    }
+
+    function aplicarFiltros() {
+      const dataInicio = document.getElementById('filterDataInicio').value;
+      const dataFim = document.getElementById('filterDataFim').value;
+      const status = document.getElementById('filterStatus').value;
+      const veiculo = document.getElementById('filterVeiculo').value;
+      const motorista = document.getElementById('filterMotorista').value;
+      const controlador = document.getElementById('filterControlador').value;
+
+      registrosFiltrados = todosRegistros.filter(item => {
+        if (dataInicio && item.data < dataInicio) return false;
+        if (dataFim && item.data > dataFim) return false;
+        if (status && item.status !== status) return false;
+        if (veiculo && item.veiculo !== veiculo) return false;
+        if (motorista && item.nome !== motorista) return false;
+        if (controlador && (item.controladorSaida !== controlador && item.controladorChegada !== controlador)) return false;
+        return true;
+      });
+
+      renderTable();
+      updateKPIs();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('gestorTableBody');
+      tbody.innerHTML = '';
+
+      if (registrosFiltrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 20px; color: var(--text-muted);">Nenhum registro encontrado com os filtros aplicados.</td></tr>`;
+        return;
+      }
+
+      [...registrosFiltrados].reverse().forEach(item => {
+        const tr = document.createElement('tr');
+        const isEmTransito = item.status === 'EM_TRANSITO';
+        const kmPercorrido = isEmTransito ? '<em>Em andamento</em>' : calcularKmPercorrido(item.kmSaida, item.kmChegada);
+
+        tr.innerHTML = `
+          <td>
+            ${isEmTransito 
+              ? `<span class="badge badge-transito">Em Trânsito</span>` 
+              : `<span class="badge badge-concluido">Concluído</span>`}
+          </td>
+          <td><strong>${item.veiculo}</strong></td>
+          <td>${item.nome}</td>
+          <td>
+            📅 ${formatarData(item.data)}<br>
+            ⏰ ${formatarHora(item.horarioSaida)}<br>
+            📏 ${item.kmSaida ? item.kmSaida + ' km' : '-'}
+          </td>
+          <td>${renderizarMarcadorCombustivel(item.combustivelSaida, item.imgCombustivelSaida || item.fotoSaida)}</td>
+          <td>
+            ${isEmTransito 
+              ? '<em>Em andamento</em>' 
+              : `⏰ ${formatarHora(item.horarioChegada)}<br>📏 ${item.kmChegada ? item.kmChegada + ' km' : '-'}`}
+          </td>
+          <td>
+            ${isEmTransito 
+              ? '<em>-</em>' 
+              : renderizarMarcadorCombustivel(item.combustivelChegada, item.imgCombustivelChegada || item.fotoChegada)}
+          </td>
+          <td><strong>${kmPercorrido}</strong></td>
+          <td>
+            <small><strong>S:</strong> ${item.controladorSaida || '-'}</small><br>
+            <small><strong>R:</strong> ${item.controladorChegada || '-'}</small>
+          </td>
+          <td>
+            <small><strong>Saída:</strong> ${item.obsSaida || 'N/A'}</small><br>
+            <small><strong>Retorno:</strong> ${item.obsChegada || 'N/A'}</small>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateKPIs() {
+      document.getElementById('kpiTotal').innerText = registrosFiltrados.length;
+      
+      const transito = registrosFiltrados.filter(r => r.status === 'EM_TRANSITO').length;
+      document.getElementById('kpiTransito').innerText = transito;
+
+      const concluidos = registrosFiltrados.filter(r => r.status === 'CONCLUIDO').length;
+      document.getElementById('kpiConcluidos').innerText = concluidos;
+
+      let kmTotal = 0;
+      registrosFiltrados.forEach(r => {
+        if (r.status === 'CONCLUIDO' && r.kmChegada && r.kmSaida) {
+          const dif = parseFloat(r.kmChegada) - parseFloat(r.kmSaida);
+          if (!isNaN(dif) && dif > 0) kmTotal += dif;
+        }
+      });
+      document.getElementById('kpiKmTotal').innerText = `${kmTotal} km`;
+    }
+
+    function limparFiltros() {
+      document.getElementById('filterDataInicio').value = '';
+      document.getElementById('filterDataFim').value = '';
+      document.getElementById('filterStatus').value = '';
+      document.getElementById('filterVeiculo').value = '';
+      document.getElementById('filterMotorista').value = '';
+      document.getElementById('filterControlador').value = '';
+      aplicarFiltros();
+    }
+
+    function exportarExcel() {
+      const dataToExport = registrosFiltrados.map(r => ({
+        "Data": formatarData(r.data),
+        "Veículo": r.veiculo,
+        "Motorista": r.nome,
+        "Controlador Saída": r.controladorSaida,
+        "Hora Saída": formatarHora(r.horarioSaida),
+        "KM Saída": r.kmSaida,
+        "Comb. Saída": r.combustivelSaida,
+        "Obs Saída": r.obsSaida,
+        "Controlador Chegada": r.controladorChegada,
+        "Hora Chegada": formatarHora(r.horarioChegada),
+        "KM Chegada": r.kmChegada,
+        "Comb. Chegada": r.combustivelChegada,
+        "KM Percorridos": r.status === 'CONCLUIDO' ? calcularKmPercorrido(r.kmSaida, r.kmChegada) : '-',
+        "Obs Chegada": r.obsChegada,
+        "Status": r.status
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Registros");
+      XLSX.writeFile(wb, "Relatorio_Viaturas_LSG.xlsx");
+    }
+
+    async function exportarPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: "landscape" });
+
+      const getBase64ImageFromUrl = (url) => new Promise((resolve, reject) => {
+        const img = new Image();
+        img.setAttribute("crossOrigin", "anonymous");
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        img.onerror = (error) => reject(error);
+        img.src = url;
+      });
+
+      try {
+        const logoBase64 = await getBase64ImageFromUrl("../lsg logo.png");
+        doc.addImage(logoBase64, "PNG", 14, 8, 28, 14);
+      } catch (err) {
+        console.warn("Logo não encontrado para a geração do PDF.", err);
+      }
+
+      doc.setFontSize(15);
+      doc.setFont("helvetica", "bold");
+      doc.text("Relatório de Controle de Viaturas - Base GIG", 46, 18);
+
+      const tableData = registrosFiltrados.map(r => [
+        formatarData(r.data),
+        r.veiculo || '-',
+        r.nome || '-',
+        r.controladorSaida || '-',
+        formatarHora(r.horarioSaida),
+        r.kmSaida ? `${r.kmSaida} km` : '-',
+        r.combustivelSaida || '-',
+        r.controladorChegada || '-',
+        r.status === 'CONCLUIDO' ? formatarHora(r.horarioChegada) : '-',
+        r.status === 'CONCLUIDO' ? (r.kmChegada ? `${r.kmChegada} km` : '-') : '-',
+        r.status === 'CONCLUIDO' ? (r.combustivelChegada || '-') : '-',
+        r.status === 'CONCLUIDO' ? calcularKmPercorrido(r.kmSaida, r.kmChegada) : '-',
+        r.status === 'EM_TRANSITO' ? 'Em Trânsito' : 'Concluído'
+      ]);
+
+      doc.autoTable({
+        head: [[
+          'Data', 
+          'Veículo', 
+          'Motorista', 
+          'Ctrl. Saída', 
+          'Hora Saída', 
+          'KM Saída', 
+          'Comb. Saída', 
+          'Ctrl. Retorno', 
+          'Hora Ret.', 
+          'KM Ret.', 
+          'Comb. Ret.', 
+          'KM Perc.', 
+          'Status'
+        ]],
+        body: tableData,
+        startY: 28,
+        styles: { 
+          fontSize: 7, 
+          cellPadding: 2, 
+          halign: 'center', 
+          valign: 'middle' 
+        },
+        headStyles: { 
+          fillColor: [0, 43, 73], 
+          textColor: [255, 255, 255], 
+          fontStyle: 'bold' 
+        },
+        alternateRowStyles: { 
+          fillColor: [245, 246, 249] 
+        }
+      });
+
+      doc.save("Relatorio_Viaturas_LSG.pdf");
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
