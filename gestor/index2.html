@@ -86,7 +86,7 @@
   <!-- HEADER INSTITUCIONAL -->
   <header>
     <div class="logo-container">
-      <img src="./logo lsg.png" alt="Logo LSG Sky Chefs" class="logo-img">
+      <img src="logo lsg.png" alt="Logo LSG Sky Chefs" class="logo-img">
       <span class="header-title">Gestão & Relatórios de Veículos - Base GIG</span>
     </div>
     <button class="btn btn-outline" onclick="buscarDados()">
@@ -229,41 +229,32 @@
 
     // Função corrigida de formatação para evitar distorções de fuso horário (Timezone)
     function formatarDataHora(valorData) {
-      if (!valorData || valorData === '-') return '-';
+  if (!valorData || valorData === '-') return '-';
 
-      const strData = String(valorData).trim();
+  // Converte a string para objeto Date
+  let d;
+  if (typeof valorData === 'string' && valorData.includes('/')) {
+    const partes = valorData.split(' ');
+    const dataPartes = partes[0].split('/');
+    const horaPartes = partes[1] ? partes[1].split(':') : [0, 0];
+    d = new Date(dataPartes[2], dataPartes[1] - 1, dataPartes[0], horaPartes[0], horaPartes[1]);
+  } else {
+    d = new Date(valorData);
+  }
 
-      // Caso venha já formatado em DD/MM/YYYY HH:mm ou DD/MM/YYYY HH:mm:ss
-      if (strData.includes('/') && strData.includes(':')) {
-        const partes = strData.split(' ');
-        const dataStr = partes[0];
-        const horaStr = partes[1] ? partes[1].substring(0, 5) : '';
-        return horaStr ? `${dataStr} ${horaStr}` : dataStr;
-      }
+  if (isNaN(d.getTime())) return valorData;
 
-      // Tratamento direto de string ISO/Banco (YYYY-MM-DDTHH:mm ou YYYY-MM-DD HH:mm)
-      if (strData.includes('-')) {
-        const partes = strData.split('T').join(' ').split(' ');
-        const dataPartes = partes[0].split('-');
-        if (dataPartes.length === 3) {
-          const dataBr = `${dataPartes[2].padStart(2, '0')}/${dataPartes[1].padStart(2, '0')}/${dataPartes[0]}`;
-          const horaBr = partes[1] ? partes[1].substring(0, 5) : '';
-          return horaBr ? `${dataBr} ${horaBr}` : dataBr;
-        }
-      }
+  // Subtrai 3 horas para corrigir o offset do servidor (GMT vs Brasília)
+  d.setHours(d.getHours() - 3);
 
-      // Fallback usando UTC nativo caso seja um timestamp para não somar fuso local
-      const d = new Date(valorData);
-      if (isNaN(d.getTime())) return valorData;
+  const dia = String(d.getDate()).padStart(2, '0');
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const ano = d.getFullYear();
+  const horas = String(d.getHours()).padStart(2, '0');
+  const minutos = String(d.getMinutes()).padStart(2, '0');
 
-      const dia = String(d.getUTCDate()).padStart(2, '0');
-      const mes = String(d.getUTCMonth() + 1).padStart(2, '0');
-      const ano = d.getUTCFullYear();
-      const horas = String(d.getUTCHours()).padStart(2, '0');
-      const minutos = String(d.getUTCMinutes()).padStart(2, '0');
-
-      return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
-    }
+  return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+}
 
     function buscarDados() {
       document.getElementById('overlayProcessando').style.display = 'flex';
@@ -470,7 +461,7 @@
       const doc = new jsPDF('landscape', 'pt', 'a4');
 
       const imgLogo = new Image();
-      imgLogo.src = './logo lsg.png';
+      imgLogo.src = 'logo lsg.png';
 
       const columns = [
         { header: "ID", dataKey: "id" },
