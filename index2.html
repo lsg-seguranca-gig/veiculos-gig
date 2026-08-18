@@ -5,360 +5,378 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Controle de Saída e Retorno dos Veículos de Atendimento - Base GIG</title>
   <link rel="icon" href="icone lsg.ico" type="image/x-icon" />
+
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
-    /* RESET & BASE */
+    /* RESET E ESTILOS BASE */
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    body { background-color: #f1f5f9; color: #1e293b; display: flex; flex-direction: column; min-height: 100vh; }
+    body { background-color: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* HEADER */
+    /* HEADER INSTITUCIONAL */
     header { 
       background-color: #ffffff; 
       border-bottom: 1px solid #e2e8f0; 
       padding: 1rem 2rem; 
       display: flex; 
       align-items: center; 
-      justify-content: flex-start;
+      justify-content: space-between;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
     }
-    .logo-container { 
-      display: flex; 
-      align-items: center; 
-      gap: 16px; 
-    }
-    .logo-img { 
-      max-height: 48px; 
-      width: auto; 
-      object-fit: contain; 
-    }
-    .logo-title { 
-      font-size: 1.2rem; 
-      font-weight: 700; 
-      color: #0f172a; 
-      line-height: 1.2;
-    }
+    .logo-container { display: flex; align-items: center; gap: 16px; }
+    .logo-img { max-height: 44px; width: auto; object-fit: contain; }
+    .header-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
 
     /* CONTAINER PRINCIPAL */
-    main { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+    main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
 
-    /* NAVEGAÇÃO / TABS */
-    .nav-tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; }
-    .tab-button { background: none; border: none; padding: 12px 24px; font-size: 0.95rem; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
-    .tab-button:hover { color: #2563eb; }
-    .tab-button.active { color: #2563eb; border-bottom-color: #2563eb; }
+    /* CARDS E FORMULÁRIOS */
+    .card { background: #ffffff; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; color: #0f172a; display: flex; align-items: center; gap: 8px; }
 
-    /* CONTEÚDO DAS TABS */
-    .tab-content { display: none; background: #ffffff; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .tab-content.active { display: block; }
-
-    /* FORMULÁRIOS */
-    .form-group { margin-bottom: 1.25rem; }
-    .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: #334155; margin-bottom: 0.5rem; }
-    .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full-width { grid-column: 1 / -1; }
+    .form-group label { font-size: 0.85rem; font-weight: 600; color: #475569; }
+    .form-control { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; background-color: #ffffff; }
     .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-    textarea.form-control { resize: vertical; min-height: 80px; }
+    textarea.form-control { resize: vertical; min-height: 60px; }
 
     /* BOTÕES */
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 0.95rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: background-color 0.2s; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 16px; font-size: 0.875rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: background-color 0.2s; }
     .btn-primary { background-color: #2563eb; color: #ffffff; }
     .btn-primary:hover { background-color: #1d4ed8; }
-    .btn-success { background-color: #10b981; color: #ffffff; }
-    .btn-success:hover { background-color: #059669; }
+    .btn-success { background-color: #16a34a; color: #ffffff; }
+    .btn-success:hover { background-color: #15803d; }
+    .btn-outline { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; }
+    .btn-outline:hover { background-color: #f1f5f9; }
+    .btn-secondary { background-color: #64748b; color: #ffffff; }
+    .btn-secondary:hover { background-color: #475569; }
+    .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
 
-    /* TABELAS */
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 13px; }
-    th { background-color: #f8fafc; font-weight: bold; color: #334155; }
-    .badge-transito { background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: bold; display: inline-block; }
-    .badge-concluido { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-weight: bold; display: inline-block; }
+    /* TABELA DE REGISTROS */
+    .table-container { background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 900px; }
+    th, td { border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 0.85rem; vertical-align: middle; }
+    th { background-color: #f8fafc; font-weight: 600; color: #475569; }
+    tr:hover { background-color: #f8fafc; }
 
-    /* MODAL DE CONFIRMAÇÃO E OVERLAY */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .modal-box { background: white; padding: 25px; border-radius: 8px; width: 380px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-    .modal-box select { width: 100%; padding: 10px; margin: 15px 0 20px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-    #overlayProcessando { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); color: white; font-size: 20px; font-weight: bold; justify-content: center; align-items: center; z-index: 2000; }
+    /* BADGES DE STATUS */
+    .badge-transito { background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
+    .badge-concluido { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
+
+    /* JANELA MODAL */
+    .modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-content { background: #ffffff; padding: 1.75rem; border-radius: 8px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .modal-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+    .modal-footer { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* OVERLAY DE CARREGAMENTO */
+    #overlayProcessando { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); color: white; font-size: 18px; font-weight: 600; justify-content: center; align-items: center; z-index: 2000; }
   </style>
 </head>
 <body>
 
-  <!-- Overlay de Carregamento -->
-  <div id="overlayProcessando">Processando...</div>
+  <div id="overlayProcessando">Carregando dados...</div>
 
-  <!-- HEADER COM LOGO DA LSG E TÍTULO -->
+  <!-- HEADER INSTITUCIONAL -->
   <header>
     <div class="logo-container">
       <img src="./logo lsg.png" alt="Logo LSG Sky Chefs" class="logo-img">
-      <span class="logo-title">Controle de Saída e Retorno dos Veículos de Atendimento - Base GIG</span>
+      <span class="header-title">Controle de Saída e Retorno dos Veículos de Atendimento - Base GIG</span>
     </div>
+    <button class="btn btn-outline" onclick="buscarDados()">
+      <i data-lucide="refresh-cw"></i> Atualizar Tabela
+    </button>
   </header>
 
   <main>
-    <!-- ABAS DE NAVEGAÇÃO -->
-    <div class="nav-tabs">
-      <button class="tab-button active" onclick="switchTab('saida')">
-        <i data-lucide="log-out"></i> Registrar Saída
-      </button>
-      <button class="tab-button" onclick="switchTab('retorno')">
-        <i data-lucide="log-in"></i> Veículos em Atendimento / Retorno
-      </button>
-    </div>
+    <!-- FORMULÁRIO DE REGISTRO DE SAÍDA -->
+    <div class="card">
+      <h2 class="card-title"><i data-lucide="log-out"></i> Registrar Nova Saída de Veículo</h2>
+      <form id="formSaida" onsubmit="salvarSaida(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="saidaVeiculo">Veículo *</label>
+            <select id="saidaVeiculo" class="form-control" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
 
-    <!-- CONTEÚDO 1: REGISTRAR SAÍDA -->
-    <div id="tab-saida" class="tab-content active">
-      <form id="formSaida" onsubmit="handleSaida(event)">
-        <div class="form-group">
-          <label for="saidaVeiculo">Veículo / Placa *</label>
-          <select id="saidaVeiculo" class="form-control" required>
-            <option value="">Carregando opções...</option>
-          </select>
+          <div class="form-group">
+            <label for="saidaMotorista">Motorista *</label>
+            <select id="saidaMotorista" class="form-control" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="saidaAuxiliares">Auxiliar(es)</label>
+            <select id="saidaAuxiliares" class="form-control">
+              <option value="">Nenhum / Selecione...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="saidaControlador">Controlador de Saída *</label>
+            <select id="saidaControlador" class="form-control" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="saidaObs">Observações / Destino</label>
+            <textarea id="saidaObs" class="form-control" placeholder="Voo, posição ou destino..."></textarea>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="saidaMotorista">Motorista *</label>
-          <select id="saidaMotorista" class="form-control" required>
-            <option value="">Carregando opções...</option>
-          </select>
+        <div style="margin-top: 1rem; text-align: right;">
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="check"></i> Confirmar Saída
+          </button>
         </div>
-
-        <!-- DROPDOWN DE AUXILIARES -->
-        <div class="form-group">
-          <label for="saidaAuxiliar">Auxiliares (Opcional)</label>
-          <select id="saidaAuxiliar" class="form-control">
-            <option value="">Nenhum auxiliar selecionado</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="saidaControlador">Controlador de Saída *</label>
-          <select id="saidaControlador" class="form-control" required>
-            <option value="">Carregando opções...</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="saidaObs">Observações / Destino</label>
-          <textarea id="saidaObs" class="form-control" placeholder="Informe a rota, KM inicial ou observações relevantes..."></textarea>
-        </div>
-
-        <button type="submit" class="btn btn-primary">
-          <i data-lucide="send"></i> Confirmar Saída
-        </button>
       </form>
     </div>
 
-    <!-- CONTEÚDO 2: VEÍCULOS EM ATENDIMENTO / RETORNO -->
-    <div id="tab-retorno" class="tab-content">
-      <h2 style="margin-bottom: 15px; font-size: 1.1rem; color: #1e293b;">Veículos em Atendimento / Histórico</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Status</th>
-            <th>Placa / Veículo</th>
-            <th>Motorista</th>
-            <th>Auxiliar(es)</th>
-            <th>Saída</th>
-            <th>Controlador Saída</th>
-            <th>Retorno</th>
-            <th>Controlador Retorno</th>
-            <th>Obs / Destino</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-        <tbody id="tabelaCorpo">
-          <tr><td colspan="11" style="text-align:center;">Carregando dados...</td></tr>
-        </tbody>
-      </table>
+    <!-- TABELA RELATÓRIO / PAINEL DE ACOMPANHAMENTO -->
+    <div class="card">
+      <h2 class="card-title"><i data-lucide="truck"></i> Veículos em Atendimento / Histórico</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Status</th>
+              <th>Veículo</th>
+              <th>Motorista</th>
+              <th>Auxiliar(es)</th>
+              <th>Data/Hora Saída</th>
+              <th>Controlador Saída</th>
+              <th>Data/Hora Retorno</th>
+              <th>Controlador Retorno</th>
+              <th>Observações</th>
+              <th style="text-align: center;">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaRelatorio">
+            <tr><td colspan="11" style="text-align:center;">Carregando dados...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
 
-  <!-- Modal Registrar Retorno -->
-  <div id="modalRetorno" class="modal-overlay">
-    <div class="modal-box">
-      <h3 style="margin-top:0;">Registrar Retorno do Veículo</h3>
-      <p style="margin-top: 10px;"><strong>ID:</strong> <span id="modalIdExibicao"></span></p>
-      <label for="selectControladorRetorno"><strong>Selecione o Controlador (Retorno)</strong></label>
-      <select id="selectControladorRetorno">
-        <option value="">Selecione o Controlador</option>
-      </select>
-      <div style="text-align: right; gap: 10px; display: flex; justify-content: flex-end;">
-        <button type="button" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer;" onclick="fecharModalRetorno()">Cancelar</button>
-        <button type="button" class="btn btn-success" onclick="executarConfirmacaoRetorno()">Confirmar Retorno</button>
+  <!-- MODAL DE REGISTRO DE RETORNO -->
+  <div id="modalRetorno" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title"><i data-lucide="log-in"></i> Registrar Retorno</h3>
+        <button class="btn btn-outline btn-sm" onclick="fecharModalRetorno()" style="border:none; cursor:pointer;">&times;</button>
       </div>
+      <form id="formModalRetorno" onsubmit="salvarRetornoModal(event)">
+        <input type="hidden" id="modalRetornoId">
+        
+        <p style="font-size: 0.88rem; color: #475569; margin-bottom: 1rem;" id="modalInfoVeiculo"></p>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="modalControladorRetorno">Controlador de Retorno *</label>
+          <select id="modalControladorRetorno" class="form-control" required>
+            <option value="">Selecione o Controlador...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="modalObsRetorno">Observações do Retorno</label>
+          <textarea id="modalObsRetorno" class="form-control" placeholder="Observações adicionais (opcional)..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="fecharModalRetorno()">Cancelar</button>
+          <button type="submit" class="btn btn-success">
+            <i data-lucide="check-circle-2"></i> Confirmar Retorno
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
   <script>
     lucide.createIcons();
 
-    const URL_WEB_APP = '/api/gas';
-
-    let idRegistroSelecionado = null;
-
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-      if (tabName === 'saida') {
-        document.querySelectorAll('.tab-button')[0].classList.add('active');
-        document.getElementById('tab-saida').classList.add('active');
-      } else {
-        document.querySelectorAll('.tab-button')[1].classList.add('active');
-        document.getElementById('tab-retorno').classList.add('active');
-        carregarMovimentacoes();
-      }
-    }
+    const URL_PROXY = '/api/gas'; 
+    let todosRegistros = [];
+    let opcoesGlobais = null;
 
     window.onload = function() {
-      carregarOpcoes();
-      carregarMovimentacoes();
+      buscarDados();
     };
 
-    function carregarOpcoes() {
-      fetch(`${URL_WEB_APP}?acao=obterOpcoes`)
-        .then(res => res.json())
-        .then(opcoes => {
-          const selectRetorno = document.getElementById('selectControladorRetorno');
-          selectRetorno.innerHTML = '<option value="">Selecione o Controlador</option>';
-          if (opcoes && opcoes.controladores) {
-            opcoes.controladores.forEach(function(c) {
-              const opt = document.createElement('option');
-              opt.value = c;
-              opt.textContent = c;
-              selectRetorno.appendChild(opt);
-            });
-          }
+    // FUNÇÃO AUXILIAR PARA FORMATAR DATA E HORA (dd/mm/aaaa hh:mm)
+    function formatarDataHora(stringIso) {
+      if (!stringIso || stringIso === '-') return '-';
+      const data = new Date(stringIso);
+      if (isNaN(data.getTime())) return stringIso; // Retorna original caso não seja uma data ISO válida
 
-          const listaFuncionarios = opcoes.funcionarios || opcoes.motoristas || [];
+      const dia = String(data.getDate()).padStart(2, '0');
+      const mes = String(data.getMonth() + 1).padStart(2, '0');
+      const ano = data.getFullYear();
+      const horas = String(data.getHours()).padStart(2, '0');
+      const minutos = String(data.getMinutes()).padStart(2, '0');
 
-          preencherSelect('saidaVeiculo', opcoes.veiculos, 'Selecione o Veículo');
-          preencherSelect('saidaMotorista', listaFuncionarios, 'Selecione o Motorista');
-          preencherSelect('saidaAuxiliar', listaFuncionarios, 'Nenhum auxiliar selecionado');
-          preencherSelect('saidaControlador', opcoes.controladores, 'Selecione o Controlador');
+      return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+    }
+
+    // BUSCA DE DADOS COM SUPORTE AOS DOIS FORMATOS DE RESPOSTA
+    function buscarDados() {
+      document.getElementById('overlayProcessando').style.display = 'flex';
+      
+      fetch(`${URL_PROXY}?acao=obterMovimentacoes`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Erro HTTP: status ${res.status}`);
+          return res.json();
         })
-        .catch(err => console.error('Erro ao buscar opções:', err));
-    }
+        .then(resposta => {
+          document.getElementById('overlayProcessando').style.display = 'none';
+          
+          let movimentacoes = [];
+          let opcoes = null;
 
-    function preencherSelect(idElemento, lista, placeholder) {
-      const select = document.getElementById(idElemento);
-      select.innerHTML = `<option value="">${placeholder}</option>`;
-      if (lista && lista.length > 0) {
-        lista.forEach(item => {
-          const opt = document.createElement('option');
-          opt.value = item;
-          opt.textContent = item;
-          select.appendChild(opt);
-        });
-      }
-    }
-
-    function carregarMovimentacoes() {
-      fetch(`${URL_WEB_APP}?acao=obterMovimentacoes`)
-        .then(res => res.json())
-        .then(registros => {
-          const tbody = document.getElementById('tabelaCorpo');
-          tbody.innerHTML = '';
-
-          // Filtra registros válidos vindos da planilha (que possuem ao menos ID ou Veículo preenchido)
-          const registrosValidos = (registros || []).filter(r => r.id && (r.veiculo || r.motorista));
-
-          if (registrosValidos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Nenhum registro encontrado.</td></tr>';
-            return;
+          if (resposta && resposta.movimentacoes) {
+            movimentacoes = resposta.movimentacoes;
+            opcoes = resposta.opcoes;
+          } else if (Array.isArray(resposta)) {
+            movimentacoes = resposta;
+          } else {
+            throw new Error("Formato de resposta inesperado do servidor.");
           }
 
-          registrosValidos.forEach(function(r) {
-            const tr = document.createElement('tr');
-            const emTransito = !r.dataHoraRetorno;
-            
-            tr.innerHTML = `
-              <td>${r.id}</td>
-              <td><span class="${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
-              <td>${r.veiculo || '-'}</td>
-              <td>${r.motorista || '-'}</td>
-              <td>${r.auxiliares || '-'}</td>
-              <td>${r.dataHoraSaida || '-'}</td>
-              <td>${r.controladorSaida || '-'}</td>
-              <td>${r.dataHoraRetorno || '-'}</td>
-              <td>${r.controladorRetorno || '-'}</td>
-              <td>${r.observacoes || '-'}</td>
-              <td>
-                ${emTransito ? `<button class="btn btn-success" style="padding:4px 8px; font-size:12px;" onclick="abrirModalRetorno('${r.id}')">Dar Retorno</button>` : ''}
-              </td>
-            `;
-            tbody.appendChild(tr);
-          });
+          todosRegistros = (movimentacoes || []).filter(r => r && r.id && (r.veiculo || r.motorista));
+          opcoesGlobais = opcoes;
+
+          popularDropdownsFormularios(opcoesGlobais, todosRegistros);
+          renderizarTabela(todosRegistros);
         })
         .catch(err => {
-          console.error('Erro ao carregar movimentações:', err);
-          document.getElementById('tabelaCorpo').innerHTML = '<tr><td colspan="11" style="color:red; text-align:center;">Erro ao carregar dados da planilha. Verifique a URL do Web App.</td></tr>';
+          document.getElementById('overlayProcessando').style.display = 'none';
+          console.error("Erro ao carregar dados:", err);
+          document.getElementById('tabelaRelatorio').innerHTML = `
+            <tr>
+              <td colspan="11" style="color:#dc2626; text-align:center; padding: 1.5rem;">
+                Erro ao carregar dados da planilha. Verifique a URL do Web App.<br>
+                <small style="color: #64748b;">Detalhe: ${err.message}</small>
+              </td>
+            </tr>`;
         });
     }
 
-    function abrirModalRetorno(id) {
-      idRegistroSelecionado = id;
-      document.getElementById('modalIdExibicao').textContent = id;
+    function popularDropdownsFormularios(opcoes, registros) {
+      let veiculos = [], motoristas = [], auxiliares = [], controladores = [];
+
+      if (opcoes) {
+        veiculos = opcoes.veiculos || [];
+        motoristas = opcoes.motoristas || opcoes.funcionarios || [];
+        auxiliares = opcoes.auxiliares || opcoes.funcionarios || [];
+        controladores = opcoes.controladores || [];
+      } else {
+        const vSet = new Set(), mSet = new Set(), aSet = new Set(), cSet = new Set();
+        registros.forEach(r => {
+          if (r.veiculo) vSet.add(r.veiculo.trim());
+          if (r.motorista) mSet.add(r.motorista.trim());
+          if (r.auxiliares) r.auxiliares.split(',').forEach(aux => aux.trim() && aSet.add(aux.trim()));
+          if (r.controladorSaida) cSet.add(r.controladorSaida.trim());
+          if (r.controladorRetorno) cSet.add(r.controladorRetorno.trim());
+        });
+        veiculos = Array.from(vSet);
+        motoristas = Array.from(mSet);
+        auxiliares = Array.from(aSet);
+        controladores = Array.from(cSet);
+      }
+
+      preencherSelect('saidaVeiculo', veiculos.sort(), 'Selecione o Veículo...');
+      preencherSelect('saidaMotorista', motoristas.sort(), 'Selecione o Motorista...');
+      preencherSelect('saidaAuxiliares', auxiliares.sort(), 'Nenhum / Selecione...');
+      preencherSelect('saidaControlador', controladores.sort(), 'Selecione o Controlador...');
+      preencherSelect('modalControladorRetorno', controladores.sort(), 'Selecione o Controlador...');
+    }
+
+    function preencherSelect(elemId, lista, textoPadrao) {
+      const select = document.getElementById(elemId);
+      select.innerHTML = `<option value="">${textoPadrao}</option>`;
+      lista.forEach(item => {
+        if (!item) return;
+        const option = document.createElement('option');
+        option.value = item;
+        option.textContent = item;
+        select.appendChild(option);
+      });
+    }
+
+    function renderizarTabela(registros) {
+      const tbody = document.getElementById('tabelaRelatorio');
+      tbody.innerHTML = '';
+
+      if (registros.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 2rem;">Nenhum registro de movimentação.</td></tr>';
+        return;
+      }
+
+      registros.forEach(r => {
+        const tr = document.createElement('tr');
+        const emTransito = !r.dataHoraRetorno;
+        
+        tr.innerHTML = `
+          <td><strong>#${r.id}</strong></td>
+          <td><span class="${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
+          <td>${r.veiculo || '-'}</td>
+          <td>${r.motorista || '-'}</td>
+          <td>${r.auxiliares || '-'}</td>
+          <td>${formatarDataHora(r.dataHoraSaida)}</td>
+          <td>${r.controladorSaida || '-'}</td>
+          <td>${formatarDataHora(r.dataHoraRetorno)}</td>
+          <td>${r.controladorRetorno || '-'}</td>
+          <td>${r.observacoes || '-'}</td>
+          <td style="text-align: center;">
+            ${emTransito 
+              ? `<button class="btn btn-success btn-sm" onclick="abrirModalRetorno('${r.id}', '${r.veiculo}', '${r.motorista}')"><i data-lucide="log-in"></i> Retorno</button>`
+              : '<span style="color:#94a3b8; font-size: 0.8rem;">Concluído</span>'
+            }
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      lucide.createIcons();
+    }
+
+    // ABRIR E FECHAR MODAL DE RETORNO
+    function abrirModalRetorno(id, veiculo, motorista) {
+      document.getElementById('modalRetornoId').value = id;
+      document.getElementById('modalInfoVeiculo').innerHTML = `Registrando retorno para o veículo <strong>${veiculo}</strong> (ID #${id}) - Motorista: <strong>${motorista}</strong>`;
+      document.getElementById('formModalRetorno').reset();
       document.getElementById('modalRetorno').style.display = 'flex';
     }
 
     function fecharModalRetorno() {
-      idRegistroSelecionado = null;
-      document.getElementById('selectControladorRetorno').value = '';
       document.getElementById('modalRetorno').style.display = 'none';
     }
 
-    function executarConfirmacaoRetorno() {
-      const controlador = document.getElementById('selectControladorRetorno').value;
-
-      if (!controlador) {
-        alert('Por favor, selecione o controlador.');
-        return;
-      }
-
-      document.getElementById('overlayProcessando').style.display = 'flex';
-
-      fetch(URL_WEB_APP, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          acao: 'registrarRetorno',
-          idRegistro: idRegistroSelecionado,
-          controladorRetorno: controlador
-        })
-      })
-      .then(res => res.json())
-      .then(resposta => {
-        document.getElementById('overlayProcessando').style.display = 'none';
-        if (resposta.status === 'sucesso') {
-          fecharModalRetorno();
-          carregarMovimentacoes();
-        } else {
-          alert('Erro: ' + (resposta.mensagem || 'Não foi possível localizar o ID na planilha.'));
-        }
-      })
-      .catch(err => {
-        document.getElementById('overlayProcessando').style.display = 'none';
-        alert('Erro ao enviar requisição ao servidor: ' + err);
-      });
-    }
-
-    function handleSaida(event) {
+    // SALVAR SAÍDA
+    function salvarSaida(event) {
       event.preventDefault();
+      document.getElementById('overlayProcessando').style.display = 'flex';
 
       const payload = {
         acao: 'registrarSaida',
         veiculo: document.getElementById('saidaVeiculo').value,
         motorista: document.getElementById('saidaMotorista').value,
-        auxiliares: document.getElementById('saidaAuxiliar').value,
+        auxiliares: document.getElementById('saidaAuxiliares').value,
         controladorSaida: document.getElementById('saidaControlador').value,
         observacoes: document.getElementById('saidaObs').value
       };
 
-      document.getElementById('overlayProcessando').style.display = 'flex';
-
-      fetch(URL_WEB_APP, {
+      fetch(URL_PROXY, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
@@ -367,15 +385,48 @@
       .then(resposta => {
         document.getElementById('overlayProcessando').style.display = 'none';
         if (resposta.status === 'sucesso') {
-          alert('Saída registrada com sucesso!');
           document.getElementById('formSaida').reset();
+          buscarDados();
         } else {
-          alert('Erro ao registrar saída: ' + (resposta.mensagem || 'Tente novamente.'));
+          alert('Erro ao registrar saída: ' + resposta.mensagem);
         }
       })
       .catch(err => {
         document.getElementById('overlayProcessando').style.display = 'none';
-        alert('Erro na comunicação com o servidor: ' + err);
+        alert('Erro de comunicação: ' + err.message);
+      });
+    }
+
+    // SALVAR RETORNO VIA MODAL
+    function salvarRetornoModal(event) {
+      event.preventDefault();
+      fecharModalRetorno();
+      document.getElementById('overlayProcessando').style.display = 'flex';
+
+      const payload = {
+        acao: 'registrarRetorno',
+        id: document.getElementById('modalRetornoId').value,
+        controladorRetorno: document.getElementById('modalControladorRetorno').value,
+        observacoes: document.getElementById('modalObsRetorno').value
+      };
+
+      fetch(URL_PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(resposta => {
+        document.getElementById('overlayProcessando').style.display = 'none';
+        if (resposta.status === 'sucesso') {
+          buscarDados();
+        } else {
+          alert('Erro ao registrar retorno: ' + resposta.mensagem);
+        }
+      })
+      .catch(err => {
+        document.getElementById('overlayProcessando').style.display = 'none';
+        alert('Erro de comunicação: ' + err.message);
       });
     }
   </script>
