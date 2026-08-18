@@ -213,11 +213,27 @@
       buscarDados();
     };
 
+    // VERIFICA SE O CAMPO DE RETORNO POSSUI UMA DATA/HORA VÁLIDA
+    function verificarTemRetorno(valorDataRetorno) {
+      if (!valorDataRetorno) return false;
+      const str = String(valorDataRetorno).trim();
+      
+      // Se for vazio, traço, undefined, null ou apenas data sem hora incompleta/inválida
+      if (str === "" || str === "-" || str === "undefined" || str === "null") return false;
+      
+      // Verifica se contém números suficientes para ser um timestamp/data real
+      const contemNumeros = /\d/.test(str);
+      return contemNumeros;
+    }
+
     // FUNÇÃO AUXILIAR PARA FORMATAR DATA E HORA (dd/mm/aaaa hh:mm)
     function formatarDataHora(stringIso) {
-      if (!stringIso || stringIso === '-') return '-';
-      const data = new Date(stringIso);
-      if (isNaN(data.getTime())) return stringIso; // Retorna original caso não seja uma data ISO válida
+      if (!stringIso) return '-';
+      const str = String(stringIso).trim();
+      if (str === "" || str === "-" || str === "undefined" || str === "null") return '-';
+
+      const data = new Date(str);
+      if (isNaN(data.getTime())) return str; // Retorna a string original se não for conversível para Date
 
       const dia = String(data.getDate()).padStart(2, '0');
       const mes = String(data.getMonth() + 1).padStart(2, '0');
@@ -324,7 +340,10 @@
 
       registros.forEach(r => {
         const tr = document.createElement('tr');
-        const emTransito = !r.dataHoraRetorno;
+        
+        // Determina rigorosamente se o veículo está em trânsito com base na existência real do retorno
+        const temRetorno = verificarTemRetorno(r.dataHoraRetorno);
+        const emTransito = !temRetorno;
         
         tr.innerHTML = `
           <td><strong>#${r.id}</strong></td>
@@ -373,7 +392,9 @@
         motorista: document.getElementById('saidaMotorista').value,
         auxiliares: document.getElementById('saidaAuxiliares').value,
         controladorSaida: document.getElementById('saidaControlador').value,
-        observacoes: document.getElementById('saidaObs').value
+        observacoes: document.getElementById('saidaObs').value,
+        dataHoraRetorno: "",       // Garante que o retorno inicie zerado
+        controladorRetorno: ""     // Garante que o controlador de retorno inicie zerado
       };
 
       fetch(URL_PROXY, {
