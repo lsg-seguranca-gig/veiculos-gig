@@ -20,19 +20,74 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     body { background-color: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* HEADER */
+    /* HEADER E CARD PRINCIPAL DO TOPO */
     header { 
-      background-color: #ffffff; 
-      border-bottom: 1px solid #e2e8f0; 
-      padding: 1rem 2rem; 
       display: flex; 
       align-items: center; 
-      justify-content: space-between;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+      justify-content: flex-end; 
+      padding: 1rem 2rem 0 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
     }
-    .logo-container { display: flex; align-items: center; gap: 16px; }
-    .logo-img { max-height: 44px; width: auto; object-fit: contain; }
-    .header-title { font-size: 1.15rem; font-weight: 700; color: #0f172a; }
+
+    .top-card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      border-top: 4px solid #d97706; /* Detalhe colorido superior */
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .top-card-logo {
+      max-height: 55px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .top-card-content {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .top-card-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .top-card-subtitle {
+      font-size: 0.875rem;
+      color: #64748b;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+
+    .btn-voltar {
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .btn-voltar:hover {
+      background-color: #e2e8f0;
+    }
 
     /* LAYOUT DA PÁGINA */
     main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
@@ -83,18 +138,26 @@
 
   <div id="overlayProcessando">Carregando dados...</div>
 
-  <!-- HEADER INSTITUCIONAL -->
+  <!-- HEADER COM BOTÃO DE ATUALIZAR DADOS -->
   <header>
-    <div class="logo-container">
-      <img src="./logo lsg.png" alt="Logo LSG Sky Chefs" class="logo-img">
-      <span class="header-title">Gestão & Relatórios de Veículos - Base GIG</span>
-    </div>
     <button class="btn btn-outline" onclick="buscarDados()">
       <i data-lucide="refresh-cw"></i> Atualizar Dados
     </button>
   </header>
 
   <main>
+    <!-- CARD DO TOPO - PAINEL DE CONTROLE -->
+    <div class="top-card">
+      <img src="./logo lsg.png" alt="Logo LSG Sky Chefs" class="top-card-logo">
+      <div class="top-card-content">
+        <h1 class="top-card-title">Painel de Controle do Gestor - Base GIG</h1>
+        <p class="top-card-subtitle">Relatórios, Indicadores e Monitoramento de Frota</p>
+        <a href="../index.html" class="btn-voltar">
+          <i data-lucide="arrow-left"></i> Voltar ao Registro
+        </a>
+      </div>
+    </div>
+
     <!-- SEÇÃO DE KPIS / RESUMO -->
     <div class="kpi-grid">
       <div class="kpi-card">
