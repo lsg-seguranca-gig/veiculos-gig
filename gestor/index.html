@@ -238,19 +238,28 @@
     const API_URL = "/api/gas";
     let todosRegistros = [];
     let registrosFiltrados = [];
-    let currentFetchController = null; // Controla a interrupção da busca
+    let currentFetchController = null;
 
     async function loadData() {
       showLoading(true);
       try {
         currentFetchController = new AbortController();
         let response = await fetch(`${API_URL}?acao=obterTodos`, { signal: currentFetchController.signal });
+        
+        if (!response.ok) {
+          throw new Error(`Erro na comunicação com o servidor (${response.status})`);
+        }
+
         let data = await response.json();
 
         if (data.registros && Array.isArray(data.registros)) {
           todosRegistros = data.registros;
+        } else if (data.movimentacoes && Array.isArray(data.movimentacoes)) {
+          todosRegistros = data.movimentacoes;
         } else if (Array.isArray(data)) {
           todosRegistros = data;
+        } else {
+          todosRegistros = [];
         }
 
         populateDropdowns(data);
@@ -264,7 +273,8 @@
     }
 
     function showLoading(show) {
-      document.getElementById('loadingScreen').style.display = show ? 'flex' : 'none';
+      const el = document.getElementById('loadingScreen');
+      if (el) el.style.display = show ? 'flex' : 'none';
     }
 
     function populateDropdowns(data) {
@@ -273,10 +283,28 @@
       const selectAuxiliar = document.getElementById('filterAuxiliar');
       const selectControlador = document.getElementById('filterControlador');
 
-      let veiculos = data.veiculos || [];
-      let motoristas = data.motoristas || [];
-      let auxiliares = data.auxiliares || [];
-      let controladores = data.controladores || [];
+      let veiculos = data.veiculos || (data.opcoes ? data.opcoes.veiculos : []) || [];
+      let motoristas = data.motoristas || (data.opcoes ? data.opcoes.motoristas : []) || [];
+      let auxiliares = data.auxiliares || (data.opcoes ? data.opcoes.auxiliares : []) || [];
+      let controladores = data.controladores || (data.opcoes ? data.opcoes.controladores : []) || [];
+
+      // Extração fallback das opções diretamente da lista de registros
+      if (todosRegistros.length > 0) {
+        if (veiculos.length === 0) {
+          veiculos = [...new Set(todosRegistros.map(r => r.veiculo || r.placa).filter(Boolean))].sort();
+        }
+        if (motoristas.length === 0) {
+          motoristas = [...new Set(todosRegistros.map(r => r.motorista || r.nome).filter(Boolean))].sort();
+        }
+        if (auxiliares.length === 0) {
+          auxiliares = [...new Set(todosRegistros.map(r => r.auxiliar || r.auxiliares).filter(Boolean))].sort();
+        }
+        if (controladores.length === 0) {
+          const cSaida = todosRegistros.map(r => r.controladorSaida || r.controlador).filter(Boolean);
+          const cChegada = todosRegistros.map(r => r.controladorChegada || r.controladorRetorno).filter(Boolean);
+          controladores = [...new Set([...cSaida, ...cChegada])].sort();
+        }
+      }
 
       selectVeiculo.innerHTML = '<option value="">Todos os veículos...</option>';
       veiculos.forEach(v => selectVeiculo.innerHTML += `<option value="${v}">${v}</option>`);
@@ -292,19 +320,19 @@
     }
 
     function formatarDataBR(val) {
-      if (!val || val === '-') return '-';
+      if (!val || val === '-' || val === 'null' || val === 'undefined') return '-';
       let str = String(val).trim();
       
-      // Formato YYYY-MM-DD
+      // Converte YYYY-MM-DD para DD/MM/YYYY
       if (str.includes('-')) {
         let p = str.split('T')[0].split('-');
-        if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+        if (p.length === 3) return `${p[2].padStart(2, '0')}/${p[1].padStart(2, '0')}/${p[0]}`;
       }
       return str;
     }
 
     function formatarHoraBR(val) {
-      if (!val || val === '-') return '-';
+      if (!val || val === '-' || val === 'null' || val === 'undefined') return '-';
       let str = String(val).trim();
       if (str.includes(':')) {
         let p = str.split(':');
@@ -315,7 +343,8 @@
 
     function checarEmTransito(item) {
       if (item.status === 'EM_TRANSITO') return true;
-      if (!item.dataChegada || item.dataChegada === '-' || item.dataChegada.trim() === '') return true;
+      let dataRet = item.dataChegada || item.dataRetorno;
+      if (!dataRet || dataRet === '-' || String(dataRet).trim() === '') return true;
       return false;
     }
 
@@ -324,7 +353,7 @@
       setTimeout(() => {
         aplicarFiltros();
         showLoading(false);
-      }, 300);
+      }, 200);
     }
 
     function aplicarFiltros() {
@@ -346,13 +375,21 @@
         if (status === 'EM_TRANSITO' && !emTransito) return false;
         if (status === 'CONCLUIDO' && emTransito) return false;
 
-        if (veiculo && item.veiculo !== veiculo) return false;
-        if (motorista && item.motorista !== motorista) return false;
-        if (auxiliar && item.auxiliar !== auxiliar) return false;
-        if (controlador && (item.controladorSaida !== controlador && item.controladorChegada !== controlador)) return false;
+        const itemVeic = item.veiculo || item.placa;
+        if (veiculo && itemVeic !== veiculo) return false;
+
+        const itemMot = item.motorista || item.nome;
+        if (motorista && itemMot !== motorista) return false;
+
+        const itemAux = item.auxiliar || item.auxiliares;
+        if (auxiliar && itemAux !== auxiliar) return false;
+
+        const ctrlSaida = item.controladorSaida || item.controlador;
+        const ctrlChegada = item.controladorChegada || item.controladorRetorno;
+        if (controlador && (ctrlSaida !== controlador && ctrlChegada !== controlador)) return false;
 
         if (obsTexto !== '') {
-          const obsS = (item.obsSaida || '').toLowerCase();
+          const obsS = (item.obsSaida || item.observacoes || '').toLowerCase();
           if (!obsS.includes(obsTexto)) return false;
         }
 
@@ -377,10 +414,16 @@
         const isEmTransito = checarEmTransito(item);
         
         const dataSaidaBR = formatarDataBR(item.dataSaida || item.data);
-        const horaSaidaBR = formatarHoraBR(item.horarioSaida);
+        const horaSaidaBR = formatarHoraBR(item.horarioSaida || item.horaSaida);
 
-        const dataChegadaBR = formatarDataBR(item.dataChegada);
-        const horaChegadaBR = formatarHoraBR(item.horarioChegada);
+        const dataChegadaBR = formatarDataBR(item.dataChegada || item.dataRetorno);
+        const horaChegadaBR = formatarHoraBR(item.horarioChegada || item.horaRetorno);
+
+        const combSaida = item.combustivelSaida || item.combSaida || '-';
+        const combChegada = item.combustivelChegada || item.combRetorno || '-';
+
+        const kmSaidaVal = item.kmSaida || '-';
+        const kmChegadaVal = item.kmChegada || item.kmRetorno || '-';
 
         tr.innerHTML = `
           <td>
@@ -388,21 +431,21 @@
               ? `<span class="badge badge-transito">Em Trânsito</span>` 
               : `<span class="badge badge-concluido">Concluído</span>`}
           </td>
-          <td><strong>${item.veiculo || '-'}</strong></td>
-          <td>${item.motorista || '-'}</td>
-          <td>${item.auxiliar || '-'}</td>
+          <td><strong>${item.veiculo || item.placa || '-'}</strong></td>
+          <td>${item.motorista || item.nome || '-'}</td>
+          <td>${item.auxiliar || item.auxiliares || '-'}</td>
           <td>📅 ${dataSaidaBR}<br>⏰ ${horaSaidaBR}</td>
           <td>${isEmTransito ? '<em>Em andamento</em>' : `📅 ${dataChegadaBR}<br>⏰ ${horaChegadaBR}`}</td>
-          <td>⛽ ${item.combustivelSaida || '-'}</td>
-          <td>⛽ ${isEmTransito ? '-' : (item.combustivelChegada || '-')}</td>
-          <td>📏 ${item.kmSaida ? item.kmSaida + ' km' : '-'}</td>
-          <td>📏 ${isEmTransito ? '-' : (item.kmChegada ? item.kmChegada + ' km' : '-')}</td>
+          <td>⛽ ${combSaida}</td>
+          <td>⛽ ${isEmTransito ? '-' : combChegada}</td>
+          <td>📏 ${kmSaidaVal !== '-' ? kmSaidaVal + ' km' : '-'}</td>
+          <td>📏 ${isEmTransito ? '-' : (kmChegadaVal !== '-' ? kmChegadaVal + ' km' : '-')}</td>
           <td>
-            <small><strong>S:</strong> ${item.controladorSaida || '-'}</small><br>
-            <small><strong>R:</strong> ${item.controladorChegada || '-'}</small>
+            <small><strong>S:</strong> ${item.controladorSaida || item.controlador || '-'}</small><br>
+            <small><strong>R:</strong> ${item.controladorChegada || item.controladorRetorno || '-'}</small>
           </td>
           <td>
-            <small>${item.obsSaida || 'N/A'}</small>
+            <small>${item.obsSaida || item.observacoes || 'N/A'}</small>
           </td>
         `;
         tbody.appendChild(tr);
@@ -416,8 +459,10 @@
 
       let kmTotal = 0;
       registrosFiltrados.forEach(r => {
-        if (!checarEmTransito(r) && r.kmChegada && r.kmSaida) {
-          const dif = parseFloat(r.kmChegada) - parseFloat(r.kmSaida);
+        const kmS = r.kmSaida;
+        const kmC = r.kmChegada || r.kmRetorno;
+        if (!checarEmTransito(r) && kmC && kmS) {
+          const dif = parseFloat(kmC) - parseFloat(kmS);
           if (!isNaN(dif) && dif > 0) kmTotal += dif;
         }
       });
@@ -425,12 +470,10 @@
     }
 
     function limparFiltros() {
-      // Interrompe qualquer busca em andamento
       if (currentFetchController) {
         currentFetchController.abort();
       }
 
-      // Limpa os campos de busca
       document.getElementById('filterDataInicio').value = '';
       document.getElementById('filterDataFim').value = '';
       document.getElementById('filterStatus').value = '';
@@ -442,7 +485,6 @@
 
       registrosFiltrados = [];
       
-      // Reseta a tabela para o estado inicial (sem informações)
       const tbody = document.getElementById('gestorTableBody');
       tbody.innerHTML = `
         <tr>
@@ -452,7 +494,6 @@
         </tr>
       `;
 
-      // Reseta Indicadores (KPIs)
       document.getElementById('kpiTotal').innerText = '0';
       document.getElementById('kpiTransito').innerText = '0';
       document.getElementById('kpiConcluidos').innerText = '0';
@@ -464,20 +505,20 @@
     function exportarExcel() {
       if (registrosFiltrados.length === 0) return alert("Nenhum registro para exportar.");
       const dataToExport = registrosFiltrados.map(r => ({
-        "Data Saída": formatarDataBR(r.dataSaida),
-        "Hora Saída": formatarHoraBR(r.horarioSaida),
-        "Data Retorno": formatarDataBR(r.dataChegada),
-        "Hora Retorno": formatarHoraBR(r.horarioChegada),
-        "Veículo": r.veiculo,
-        "Motorista": r.motorista,
-        "Auxiliar": r.auxiliar,
-        "Controlador Saída": r.controladorSaida,
-        "Controlador Chegada": r.controladorChegada,
-        "Comb. Saída": r.combustivelSaida,
-        "Comb. Retorno": r.combustivelChegada,
+        "Data Saída": formatarDataBR(r.dataSaida || r.data),
+        "Hora Saída": formatarHoraBR(r.horarioSaida || r.horaSaida),
+        "Data Retorno": formatarDataBR(r.dataChegada || r.dataRetorno),
+        "Hora Retorno": formatarHoraBR(r.horarioChegada || r.horaRetorno),
+        "Veículo": r.veiculo || r.placa,
+        "Motorista": r.motorista || r.nome,
+        "Auxiliar": r.auxiliar || r.auxiliares,
+        "Controlador Saída": r.controladorSaida || r.controlador,
+        "Controlador Chegada": r.controladorChegada || r.controladorRetorno,
+        "Comb. Saída": r.combustivelSaida || r.combSaida,
+        "Comb. Retorno": r.combustivelChegada || r.combRetorno,
         "KM Saída": r.kmSaida,
-        "KM Retorno": r.kmChegada,
-        "Observações": r.obsSaida,
+        "KM Retorno": r.kmChegada || r.kmRetorno,
+        "Observações": r.obsSaida || r.observacoes,
         "Status": checarEmTransito(r) ? "EM_TRANSITO" : "CONCLUIDO"
       }));
       const ws = XLSX.utils.json_to_sheet(dataToExport);
@@ -495,19 +536,19 @@
       doc.text("Relatório de Controle de Viaturas - Base GIG", 14, 18);
 
       const tableData = registrosFiltrados.map(r => [
-        formatarDataBR(r.dataSaida),
-        !checarEmTransito(r) ? formatarDataBR(r.dataChegada) : '-',
-        r.veiculo || '-',
-        r.motorista || '-',
-        r.auxiliar || '-',
-        r.controladorSaida || '-',
-        formatarHoraBR(r.horarioSaida),
+        formatarDataBR(r.dataSaida || r.data),
+        !checarEmTransito(r) ? formatarDataBR(r.dataChegada || r.dataRetorno) : '-',
+        r.veiculo || r.placa || '-',
+        r.motorista || r.nome || '-',
+        r.auxiliar || r.auxiliares || '-',
+        r.controladorSaida || r.controlador || '-',
+        formatarHoraBR(r.horarioSaida || r.horaSaida),
         r.kmSaida ? `${r.kmSaida} km` : '-',
-        r.combustivelSaida || '-',
-        r.controladorChegada || '-',
-        !checarEmTransito(r) ? formatarHoraBR(r.horarioChegada) : '-',
-        !checarEmTransito(r) ? (r.kmChegada ? `${r.kmChegada} km` : '-') : '-',
-        !checarEmTransito(r) ? (r.combustivelChegada || '-') : '-',
+        r.combustivelSaida || r.combSaida || '-',
+        r.controladorChegada || r.controladorRetorno || '-',
+        !checarEmTransito(r) ? formatarHoraBR(r.horarioChegada || r.horaRetorno) : '-',
+        !checarEmTransito(r) ? ((r.kmChegada || r.kmRetorno) ? `${r.kmChegada || r.kmRetorno} km` : '-') : '-',
+        !checarEmTransito(r) ? (r.combustivelChegada || r.combRetorno || '-') : '-',
         checarEmTransito(r) ? 'Em Trânsito' : 'Concluído'
       ]);
 
