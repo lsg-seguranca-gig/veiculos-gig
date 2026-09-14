@@ -43,7 +43,7 @@
 
     .app-container {
       width: 100%;
-      max-width: 1300px;
+      max-width: 1400px;
       display: flex;
       flex-direction: column;
       gap: 24px;
@@ -144,7 +144,7 @@
 
     .filter-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 14px;
       margin-bottom: 16px;
     }
@@ -301,6 +301,13 @@
         </div>
 
         <div class="filter-group">
+          <label>Auxiliar</label>
+          <select id="filterAuxiliar">
+            <option value="">Todos os auxiliares...</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
           <label>Controlador</label>
           <select id="filterControlador">
             <option value="">Todos os controladores...</option>
@@ -331,6 +338,7 @@
               <th>Status</th>
               <th>Veículo</th>
               <th>Motorista</th>
+              <th>Auxiliar</th>
               <th>Saída (Data / Hora)</th>
               <th>Retorno (Data / Hora)</th>
               <th>Comb. Saída</th>
@@ -354,16 +362,12 @@
 
     async function loadData() {
       const tbody = document.getElementById('gestorTableBody');
-      tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>`;
 
       try {
-        // Tenta obter os dados via parâmetro genérico ou direto
         let response = await fetch(`${API_URL}?acao=obterTodos`);
-        if (!response.ok) response = await fetch(API_URL);
+        let data = await response.json();
 
-        const data = await response.json();
-
-        // Extração flexível da lista de registros recebida do Apps Script
         if (Array.isArray(data)) {
           todosRegistros = data;
         } else if (data.registros && Array.isArray(data.registros)) {
@@ -375,34 +379,39 @@
         }
 
         populateDropdowns(data);
-        aplicarFiltros(true); // Exibe todos os registros sem bloquear por data ao iniciar
+        aplicarFiltros(true);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
-        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; color: red; padding: 20px;">Erro ao carregar dados do servidor. Verifique a conexão com o Google Apps Script.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; color: red; padding: 20px;">Erro ao carregar dados do servidor.</td></tr>`;
       }
     }
 
     function populateDropdowns(data) {
       const selectVeiculo = document.getElementById('filterVeiculo');
       const selectMotorista = document.getElementById('filterMotorista');
+      const selectAuxiliar = document.getElementById('filterAuxiliar');
       const selectControlador = document.getElementById('filterControlador');
 
       let veiculos = data.veiculos || [];
       let motoristas = data.motoristas || [];
+      let auxiliares = data.auxiliares || [];
       let controladores = data.controladores || [];
 
-      if (veiculos.length === 0 && todosRegistros.length > 0) {
-        veiculos = [...new Set(todosRegistros.map(r => r.veiculo || r.placa).filter(Boolean))].sort();
-      }
-
-      if (motoristas.length === 0 && todosRegistros.length > 0) {
-        motoristas = [...new Set(todosRegistros.map(r => r.nome || r.motorista).filter(Boolean))].sort();
-      }
-
-      if (controladores.length === 0 && todosRegistros.length > 0) {
-        const ctrlSaida = todosRegistros.map(r => r.controladorSaida || r.controlador).filter(Boolean);
-        const ctrlChegada = todosRegistros.map(r => r.controladorChegada).filter(Boolean);
-        controladores = [...new Set([...ctrlSaida, ...ctrlChegada])].sort();
+      if (todosRegistros.length > 0) {
+        if (veiculos.length === 0) {
+          veiculos = [...new Set(todosRegistros.map(r => r.veiculo || r.placa).filter(Boolean))].sort();
+        }
+        if (motoristas.length === 0) {
+          motoristas = [...new Set(todosRegistros.map(r => r.nome || r.motorista).filter(Boolean))].sort();
+        }
+        if (auxiliares.length === 0) {
+          auxiliares = [...new Set(todosRegistros.map(r => r.auxiliar || r.auxiliares || r.ajudante).filter(Boolean))].sort();
+        }
+        if (controladores.length === 0) {
+          const ctrlS = todosRegistros.map(r => r.controladorSaida || r.controlador).filter(Boolean);
+          const ctrlC = todosRegistros.map(r => r.controladorChegada).filter(Boolean);
+          controladores = [...new Set([...ctrlS, ...ctrlC])].sort();
+        }
       }
 
       selectVeiculo.innerHTML = '<option value="">Todos os veículos...</option>';
@@ -411,6 +420,9 @@
       selectMotorista.innerHTML = '<option value="">Todos os motoristas...</option>';
       motoristas.forEach(m => selectMotorista.innerHTML += `<option value="${m}">${m}</option>`);
 
+      selectAuxiliar.innerHTML = '<option value="">Todos os auxiliares...</option>';
+      auxiliares.forEach(a => selectAuxiliar.innerHTML += `<option value="${a}">${a}</option>`);
+
       selectControlador.innerHTML = '<option value="">Todos os controladores...</option>';
       controladores.forEach(c => selectControlador.innerHTML += `<option value="${c}">${c}</option>`);
     }
@@ -418,23 +430,11 @@
     function normalizarData(val) {
       if (!val) return '';
       let str = String(val).trim();
-      
-      // Formato DD/MM/AAAA
       if (str.includes('/')) {
         const p = str.split('/');
-        if (p.length === 3) {
-          const dia = p[0].padStart(2, '0');
-          const mes = p[1].padStart(2, '0');
-          const ano = p[2].substring(0, 4);
-          return `${ano}-${mes}-${dia}`;
-        }
+        if (p.length === 3) return `${p[2].substring(0,4)}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
       }
-      
-      // Formato ISO YYYY-MM-DD
-      if (str.includes('-')) {
-        return str.substring(0, 10);
-      }
-
+      if (str.includes('-')) return str.substring(0, 10);
       return '';
     }
 
@@ -457,6 +457,7 @@
       const status = document.getElementById('filterStatus').value;
       const veiculo = document.getElementById('filterVeiculo').value;
       const motorista = document.getElementById('filterMotorista').value;
+      const auxiliar = document.getElementById('filterAuxiliar').value;
       const controlador = document.getElementById('filterControlador').value;
       const obsTexto = document.getElementById('filterObs').value.trim().toLowerCase();
 
@@ -475,6 +476,9 @@
         
         const itemMotorista = item.nome || item.motorista;
         if (motorista && itemMotorista !== motorista) return false;
+
+        const itemAuxiliar = item.auxiliar || item.auxiliares || item.ajudante;
+        if (auxiliar && itemAuxiliar !== auxiliar) return false;
         
         if (controlador && (item.controladorSaida !== controlador && item.controladorChegada !== controlador && item.controlador !== controlador)) return false;
 
@@ -499,7 +503,7 @@
       tbody.innerHTML = '';
 
       if (registrosFiltrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 20px; color: var(--text-muted);">Nenhum registro encontrado com os filtros aplicados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding: 20px; color: var(--text-muted);">Nenhum registro encontrado com os filtros aplicados.</td></tr>`;
         return;
       }
 
@@ -509,7 +513,6 @@
         
         const dataSaidaBR = formatarDataBR(item.data || item.dataSaida);
         const dataChegadaBR = item.dataChegada ? formatarDataBR(item.dataChegada) : dataSaidaBR;
-        const nomeMotorista = item.nome || item.motorista || '-';
 
         tr.innerHTML = `
           <td>
@@ -518,7 +521,8 @@
               : `<span class="badge badge-concluido">Concluído</span>`}
           </td>
           <td><strong>${item.veiculo || item.placa || '-'}</strong></td>
-          <td>${nomeMotorista}</td>
+          <td>${item.nome || item.motorista || '-'}</td>
+          <td>${item.auxiliar || item.auxiliares || item.ajudante || '-'}</td>
           <td>📅 ${dataSaidaBR}<br>⏰ ${item.horarioSaida || '-'}</td>
           <td>${isEmTransito ? '<em>Em andamento</em>' : `📅 ${dataChegadaBR}<br>⏰ ${item.horarioChegada || '-'}`}</td>
           <td>⛽ ${item.combustivelSaida || '-'}</td>
@@ -540,12 +544,8 @@
 
     function updateKPIs() {
       document.getElementById('kpiTotal').innerText = registrosFiltrados.length;
-      
-      const transito = registrosFiltrados.filter(r => checarEmTransito(r)).length;
-      document.getElementById('kpiTransito').innerText = transito;
-
-      const concluidos = registrosFiltrados.filter(r => !checarEmTransito(r)).length;
-      document.getElementById('kpiConcluidos').innerText = concluidos;
+      document.getElementById('kpiTransito').innerText = registrosFiltrados.filter(r => checarEmTransito(r)).length;
+      document.getElementById('kpiConcluidos').innerText = registrosFiltrados.filter(r => !checarEmTransito(r)).length;
 
       let kmTotal = 0;
       registrosFiltrados.forEach(r => {
@@ -563,38 +563,32 @@
       document.getElementById('filterStatus').value = '';
       document.getElementById('filterVeiculo').value = '';
       document.getElementById('filterMotorista').value = '';
+      document.getElementById('filterAuxiliar').value = '';
       document.getElementById('filterControlador').value = '';
       document.getElementById('filterObs').value = '';
       aplicarFiltros(true);
     }
 
     function exportarExcel() {
-      if (registrosFiltrados.length === 0) {
-        alert("Nenhum registro para exportar.");
-        return;
-      }
-
-      const dataToExport = registrosFiltrados.map(r => {
-        const isEmTransito = checarEmTransito(r);
-        return {
-          "Data Saída": formatarDataBR(r.data || r.dataSaida),
-          "Data Retorno": r.dataChegada ? formatarDataBR(r.dataChegada) : formatarDataBR(r.data || r.dataSaida),
-          "Veículo": r.veiculo || r.placa,
-          "Motorista": r.nome || r.motorista,
-          "Controlador Saída": r.controladorSaida || r.controlador,
-          "Hora Saída": r.horarioSaida,
-          "KM Saída": r.kmSaida,
-          "Comb. Saída": r.combustivelSaida,
-          "Obs Saída": r.obsSaida || r.destino,
-          "Controlador Chegada": r.controladorChegada,
-          "Hora Chegada": r.horarioChegada,
-          "KM Chegada": r.kmChegada,
-          "Comb. Chegada": r.combustivelChegada,
-          "Obs Chegada": r.obsChegada,
-          "Status": isEmTransito ? "EM_TRANSITO" : "CONCLUIDO"
-        };
-      });
-
+      if (registrosFiltrados.length === 0) return alert("Nenhum registro para exportar.");
+      const dataToExport = registrosFiltrados.map(r => ({
+        "Data Saída": formatarDataBR(r.data || r.dataSaida),
+        "Data Retorno": r.dataChegada ? formatarDataBR(r.dataChegada) : formatarDataBR(r.data || r.dataSaida),
+        "Veículo": r.veiculo || r.placa,
+        "Motorista": r.nome || r.motorista,
+        "Auxiliar": r.auxiliar || r.auxiliares || r.ajudante,
+        "Controlador Saída": r.controladorSaida || r.controlador,
+        "Hora Saída": r.horarioSaida,
+        "KM Saída": r.kmSaida,
+        "Comb. Saída": r.combustivelSaida,
+        "Obs Saída": r.obsSaida || r.destino,
+        "Controlador Chegada": r.controladorChegada,
+        "Hora Chegada": r.horarioChegada,
+        "KM Chegada": r.kmChegada,
+        "Comb. Chegada": r.combustivelChegada,
+        "Obs Chegada": r.obsChegada,
+        "Status": checarEmTransito(r) ? "EM_TRANSITO" : "CONCLUIDO"
+      }));
       const ws = XLSX.utils.json_to_sheet(dataToExport);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Registros");
@@ -602,46 +596,35 @@
     }
 
     async function exportarPDF() {
-      if (registrosFiltrados.length === 0) {
-        alert("Nenhum registro para exportar.");
-        return;
-      }
-
+      if (registrosFiltrados.length === 0) return alert("Nenhum registro para exportar.");
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: "landscape" });
-
-      doc.setFontSize(15);
+      doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
       doc.text("Relatório de Controle de Viaturas - Base GIG", 14, 18);
 
-      const tableData = registrosFiltrados.map(r => {
-        const isEmTransito = checarEmTransito(r);
-        return [
-          formatarDataBR(r.data || r.dataSaida),
-          !isEmTransito ? (formatarDataBR(r.dataChegada) || formatarDataBR(r.data || r.dataSaida)) : '-',
-          r.veiculo || r.placa || '-',
-          r.nome || r.motorista || '-',
-          r.controladorSaida || r.controlador || '-',
-          r.horarioSaida || '-',
-          r.kmSaida ? `${r.kmSaida} km` : '-',
-          r.combustivelSaida || '-',
-          r.controladorChegada || '-',
-          !isEmTransito ? (r.horarioChegada || '-') : '-',
-          !isEmTransito ? (r.kmChegada ? `${r.kmChegada} km` : '-') : '-',
-          !isEmTransito ? (r.combustivelChegada || '-') : '-',
-          isEmTransito ? 'Em Trânsito' : 'Concluído'
-        ];
-      });
+      const tableData = registrosFiltrados.map(r => [
+        formatarDataBR(r.data || r.dataSaida),
+        !checarEmTransito(r) ? (formatarDataBR(r.dataChegada) || formatarDataBR(r.data || r.dataSaida)) : '-',
+        r.veiculo || r.placa || '-',
+        r.nome || r.motorista || '-',
+        r.auxiliar || r.auxiliares || r.ajudante || '-',
+        r.controladorSaida || r.controlador || '-',
+        r.horarioSaida || '-',
+        r.kmSaida ? `${r.kmSaida} km` : '-',
+        r.combustivelSaida || '-',
+        r.controladorChegada || '-',
+        !checarEmTransito(r) ? (r.horarioChegada || '-') : '-',
+        !checarEmTransito(r) ? (r.kmChegada ? `${r.kmChegada} km` : '-') : '-',
+        !checarEmTransito(r) ? (r.combustivelChegada || '-') : '-',
+        checarEmTransito(r) ? 'Em Trânsito' : 'Concluído'
+      ]);
 
       doc.autoTable({
-        head: [[
-          'Data Saída', 'Data Ret.', 'Veículo', 'Motorista', 'Ctrl. Saída', 
-          'Hora Saída', 'KM Saída', 'Comb. Saída', 'Ctrl. Retorno', 
-          'Hora Ret.', 'KM Ret.', 'Comb. Ret.', 'Status'
-        ]],
+        head: [['Data Saída', 'Data Ret.', 'Veículo', 'Motorista', 'Auxiliar', 'Ctrl. Saída', 'Hora Saída', 'KM Saída', 'Comb. Saída', 'Ctrl. Retorno', 'Hora Ret.', 'KM Ret.', 'Comb. Ret.', 'Status']],
         body: tableData,
         startY: 25,
-        styles: { fontSize: 7, cellPadding: 2, halign: 'center', valign: 'middle' },
+        styles: { fontSize: 6.5, cellPadding: 2, halign: 'center', valign: 'middle' },
         headStyles: { fillColor: [0, 43, 73], textColor: [255, 255, 255], fontStyle: 'bold' }
       });
 
