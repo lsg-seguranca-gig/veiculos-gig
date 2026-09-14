@@ -381,7 +381,10 @@
         const response = await fetch(API_URL);
         const data = await response.json();
 
-        if (data.registros && Array.isArray(data.registros)) {
+        // Aceita a resposta caso venha dentro de data.registros ou como array direto em data
+        if (Array.isArray(data)) {
+          todosRegistros = data;
+        } else if (data.registros && Array.isArray(data.registros)) {
           todosRegistros = data.registros;
         }
 
@@ -397,20 +400,33 @@
       const selectMotorista = document.getElementById('filterMotorista');
       const selectControlador = document.getElementById('filterControlador');
 
-      if (data.veiculos) {
-        selectVeiculo.innerHTML = '<option value="">Todos os veículos...</option>';
-        data.veiculos.forEach(v => selectVeiculo.innerHTML += `<option value="${v}">${v}</option>`);
+      // Extrai dinamicamente valores únicos dos registros caso as listas do backend não existam no objeto principal
+      let veiculos = data.veiculos || [];
+      let motoristas = data.motoristas || [];
+      let controladores = data.controladores || [];
+
+      if (veiculos.length === 0 && todosRegistros.length > 0) {
+        veiculos = [...new Set(todosRegistros.map(r => r.veiculo).filter(Boolean))].sort();
       }
 
-      if (data.motoristas) {
-        selectMotorista.innerHTML = '<option value="">Todos os motoristas...</option>';
-        data.motoristas.forEach(m => selectMotorista.innerHTML += `<option value="${m}">${m}</option>`);
+      if (motoristas.length === 0 && todosRegistros.length > 0) {
+        motoristas = [...new Set(todosRegistros.map(r => r.nome || r.motorista).filter(Boolean))].sort();
       }
 
-      if (data.controladores) {
-        selectControlador.innerHTML = '<option value="">Todos os controladores...</option>';
-        data.controladores.forEach(c => selectControlador.innerHTML += `<option value="${c}">${c}</option>`);
+      if (controladores.length === 0 && todosRegistros.length > 0) {
+        const ctrlSaida = todosRegistros.map(r => r.controladorSaida).filter(Boolean);
+        const ctrlChegada = todosRegistros.map(r => r.controladorChegada).filter(Boolean);
+        controladores = [...new Set([...ctrlSaida, ...ctrlChegada])].sort();
       }
+
+      selectVeiculo.innerHTML = '<option value="">Todos os veículos...</option>';
+      veiculos.forEach(v => selectVeiculo.innerHTML += `<option value="${v}">${v}</option>`);
+
+      selectMotorista.innerHTML = '<option value="">Todos os motoristas...</option>';
+      motoristas.forEach(m => selectMotorista.innerHTML += `<option value="${m}">${m}</option>`);
+
+      selectControlador.innerHTML = '<option value="">Todos os controladores...</option>';
+      controladores.forEach(c => selectControlador.innerHTML += `<option value="${c}">${c}</option>`);
     }
 
     function formatarDataBR(dataStr) {
@@ -476,7 +492,10 @@
         if (status === 'CONCLUIDO' && emTransito) return false;
 
         if (veiculo && item.veiculo !== veiculo) return false;
-        if (motorista && item.nome !== motorista) return false;
+        
+        const itemMotorista = item.nome || item.motorista;
+        if (motorista && itemMotorista !== motorista) return false;
+        
         if (controlador && (item.controladorSaida !== controlador && item.controladorChegada !== controlador)) return false;
 
         if (obsTexto !== '') {
@@ -515,6 +534,7 @@
         
         const dataSaidaBR = formatarDataBR(item.data);
         const dataChegadaBR = item.dataChegada ? formatarDataBR(item.dataChegada) : dataSaidaBR;
+        const nomeMotorista = item.nome || item.motorista || '-';
 
         tr.innerHTML = `
           <td>
@@ -523,7 +543,7 @@
               : `<span class="badge badge-concluido">Concluído</span>`}
           </td>
           <td><strong>${item.veiculo || '-'}</strong></td>
-          <td>${item.nome || '-'}</td>
+          <td>${nomeMotorista}</td>
           <td>
             📅 ${dataSaidaBR}<br>
             ⏰ ${item.horarioSaida || '-'}
@@ -594,7 +614,7 @@
           "Data Saída (DD/MM/AAAA)": formatarDataBR(r.data),
           "Data Retorno (DD/MM/AAAA)": r.dataChegada ? formatarDataBR(r.dataChegada) : formatarDataBR(r.data),
           "Veículo": r.veiculo,
-          "Motorista": r.nome,
+          "Motorista": r.nome || r.motorista,
           "Controlador Saída": r.controladorSaida,
           "Hora Saída": r.horarioSaida,
           "KM Saída": r.kmSaida,
@@ -656,7 +676,7 @@
           formatarDataBR(r.data) || '-',
           !isEmTransito ? (formatarDataBR(r.dataChegada) || formatarDataBR(r.data)) : '-',
           r.veiculo || '-',
-          r.nome || '-',
+          r.nome || r.motorista || '-',
           r.controladorSaida || '-',
           r.horarioSaida || '-',
           r.kmSaida ? `${r.kmSaida} km` : '-',
