@@ -275,37 +275,43 @@
       return '-';
     }
 
-    // Parser universal para tratar datas e horas
+    // Parser universal aprimorado para tratar datas e horas
     function parseDataGlobal(val) {
       if (!val || val === '-' || val === 'null' || val === 'undefined') return { data: '-', hora: '-' };
       
       let str = String(val).trim();
 
-      // Formato ISO: YYYY-MM-DDTHH:mm:ss
-      if (str.includes('T') || str.match(/^\d{4}-\d{2}-\d{2}/)) {
-        let parts = str.split('T');
-        let dParts = parts[0].split('-');
-        let dataStr = `${dParts[2]}/${dParts[1]}/${dParts[0]}`;
-        let horaStr = '-';
-        if (parts[1]) {
-          horaStr = parts[1].substring(0, 5);
-        }
-        return { data: dataStr, hora: horaStr };
-      }
+      // Formato ISO ou Data com Hora (ex: 2026-09-14T17:49:00 ou 14/09/2026 17:49)
+      if (str.includes('T') || str.includes(' ')) {
+        let parts = str.split(/[T ]/);
+        let datePart = parts[0];
+        let timePart = parts[1] || '-';
 
-      // Formato PT-BR: DD/MM/YYYY ou DD/MM/YYYY HH:mm:ss
-      if (str.includes('/')) {
-        let parts = str.split(' ');
-        let dataStr = parts[0];
+        let dataStr = datePart;
+        if (datePart.includes('-')) {
+          let dP = datePart.split('-');
+          if (dP.length === 3) dataStr = `${dP[2]}/${dP[1]}/${dP[0]}`;
+        }
+
         let horaStr = '-';
-        if (parts[1] && parts[1].includes(':')) {
-          let hP = parts[1].split(':');
+        if (timePart !== '-' && timePart.includes(':')) {
+          let hP = timePart.split(':');
           horaStr = `${hP[0].padStart(2, '0')}:${hP[1].padStart(2, '0')}`;
         }
+
         return { data: dataStr, hora: horaStr };
       }
 
-      // Tentativa de converter Objeto Date JS/Google Apps Script
+      // Formato apenas Data (DD/MM/YYYY ou YYYY-MM-DD)
+      if (str.includes('/') || str.includes('-')) {
+        if (str.includes('-')) {
+          let dP = str.split('-');
+          if (dP.length === 3) return { data: `${dP[2]}/${dP[1]}/${dP[0]}`, hora: '-' };
+        }
+        return { data: str, hora: '-' };
+      }
+
+      // Objeto Date do JavaScript / Google Apps Script
       let d = new Date(val);
       if (!isNaN(d.getTime())) {
         let dia = String(d.getDate()).padStart(2, '0');
@@ -364,7 +370,7 @@
       const obsTexto = document.getElementById('filterObs').value.trim().toLowerCase();
 
       registrosFiltrados = todosRegistros.filter(item => {
-        let rawDate = pegarValor(item, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída');
+        let rawDate = pegarValor(item, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data_hora_saida', 'dataHoraS', 'dataS', 'data', 'criadoEm', 'created_at', 'Saída', 'Data Saída');
         let dateValISO = extrairDataISO(rawDate);
 
         if (dataInicio && dateValISO && dateValISO < dataInicio) return false;
@@ -412,15 +418,27 @@
         const tr = document.createElement('tr');
         const isEmTransito = checarEmTransito(item);
         
-        // Data e Hora de Saída
-        const rawSaida = pegarValor(item, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída', 'Data/Hora Saída');
-        const rawHoraSaida = pegarValor(item, 'horarioSaida', 'horaSaida', 'horaS', 'Hora Saída');
+        // Mapeamento abrangente para Extração de Saída
+        const rawSaida = pegarValor(item, 
+          'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data_hora_saida',
+          'dataHoraS', 'dataS', 'data', 'criadoEm', 'created_at', 'Saída', 'Data Saída', 'Data/Hora Saída'
+        );
+        const rawHoraSaida = pegarValor(item, 
+          'horarioSaida', 'horaSaida', 'hora_saida', 'horaS', 'horario_saida', 'Hora Saída'
+        );
+        
         let parsedSaida = parseDataGlobal(rawSaida);
         let horaSaidaFinal = rawHoraSaida !== '-' ? rawHoraSaida : parsedSaida.hora;
 
-        // Data e Hora de Retorno
-        const rawChegada = pegarValor(item, 'dataChegada', 'dataRetorno', 'dataRet', 'dataHoraRetorno', 'dataHoraChegada', 'chegada', 'Data Retorno', 'Data/Hora Retorno');
-        const rawHoraChegada = pegarValor(item, 'horarioChegada', 'horaRetorno', 'horaChegada', 'horaR', 'Hora Retorno');
+        // Mapeamento abrangente para Extração de Retorno
+        const rawChegada = pegarValor(item, 
+          'dataChegada', 'dataRetorno', 'data_retorno', 'data_chegada', 'dataRet',
+          'dataHoraRetorno', 'dataHoraChegada', 'chegada', 'Data Retorno', 'Data/Hora Retorno'
+        );
+        const rawHoraChegada = pegarValor(item, 
+          'horarioChegada', 'horaRetorno', 'horaChegada', 'hora_retorno', 'horaR', 'Hora Retorno'
+        );
+        
         let parsedChegada = parseDataGlobal(rawChegada);
         let horaChegadaFinal = rawHoraChegada !== '-' ? rawHoraChegada : parsedChegada.hora;
 
@@ -492,7 +510,7 @@
     function exportarExcel() {
       if (registrosFiltrados.length === 0) return alert("Nenhum registro para exportar.");
       const dataToExport = registrosFiltrados.map(r => {
-        const parsedS = parseDataGlobal(pegarValor(r, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída'));
+        const parsedS = parseDataGlobal(pegarValor(r, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data_hora_saida', 'dataHoraS', 'dataS', 'data', 'criadoEm', 'created_at', 'Saída', 'Data Saída'));
         const parsedR = parseDataGlobal(pegarValor(r, 'dataChegada', 'dataRetorno', 'dataRet', 'dataHoraRetorno', 'Data Retorno'));
         return {
           "Data Saída": parsedS.data,
@@ -523,7 +541,7 @@
       doc.text("Relatório de Controle de Viaturas - Base GIG", 14, 18);
 
       const tableData = registrosFiltrados.map(r => {
-        const parsedS = parseDataGlobal(pegarValor(r, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída'));
+        const parsedS = parseDataGlobal(pegarValor(r, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data_hora_saida', 'dataHoraS', 'dataS', 'data', 'criadoEm', 'created_at', 'Saída', 'Data Saída'));
         const parsedR = parseDataGlobal(pegarValor(r, 'dataChegada', 'dataRetorno', 'dataRet', 'dataHoraRetorno', 'Data Retorno'));
         return [
           parsedS.data,
