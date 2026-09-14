@@ -350,10 +350,18 @@
 
     function executarBusca() {
       showLoading(true);
-      setTimeout(() => {
-        aplicarFiltros();
-        showLoading(false);
-      }, 150);
+      // Se os dados não foram carregados previamente, recarrega antes de aplicar os filtros
+      if (todosRegistros.length === 0) {
+        loadData().then(() => {
+          aplicarFiltros();
+          showLoading(false);
+        });
+      } else {
+        setTimeout(() => {
+          aplicarFiltros();
+          showLoading(false);
+        }, 150);
+      }
     }
 
     function aplicarFiltros() {
@@ -488,10 +496,6 @@
     }
 
     function limparFiltros() {
-      if (currentFetchController) {
-        currentFetchController.abort();
-      }
-
       document.getElementById('filterDataInicio').value = '';
       document.getElementById('filterDataFim').value = '';
       document.getElementById('filterStatus').value = '';
@@ -501,22 +505,9 @@
       document.getElementById('filterControlador').value = '';
       document.getElementById('filterObs').value = '';
 
-      registrosFiltrados = [];
-      
-      const tbody = document.getElementById('gestorTableBody');
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="12" style="text-align:center; padding: 20px; color: var(--text-muted);">
-            Nenhuma busca realizada. Utilize os filtros acima para pesquisar.
-          </td>
-        </tr>
-      `;
-
-      document.getElementById('kpiTotal').innerText = '0';
-      document.getElementById('kpiTransito').innerText = '0';
-      document.getElementById('kpiConcluidos').innerText = '0';
-      document.getElementById('kpiKmTotal').innerText = '0 km';
-
+      registrosFiltrados = [...todosRegistros];
+      renderTable();
+      updateKPIs();
       showLoading(false);
     }
 
