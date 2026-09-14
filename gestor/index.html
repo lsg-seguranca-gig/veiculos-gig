@@ -88,7 +88,6 @@
     .badge-transito { background-color: rgba(245, 158, 11, 0.15); color: var(--warning); }
     .badge-concluido { background-color: rgba(16, 185, 129, 0.15); color: var(--success); }
 
-    /* Modal / Overlay de Carregamento */
     .loading-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -116,7 +115,7 @@
   <div class="app-container">
     <header>
       <div class="header-brand">
-        <img src="/logo lsg.png" alt="LSG Logo" class="header-logo" onerror="this.onerror=null; this.src='/logo lsg.png';">
+        <img src="/lsg logo.png" alt="LSG Logo" class="header-logo" onerror="this.onerror=null; this.src='/lsg logo.jpeg';">
         <div class="header-title">
           <h1>Painel de Controle do Gestor - Base GIG</h1>
           <p>Relatórios, Indicadores e Monitoramento de Frota</p>
@@ -244,25 +243,28 @@
       showLoading(true);
       try {
         currentFetchController = new AbortController();
-        let response = await fetch(`${API_URL}?acao=obterTodos`, { signal: currentFetchController.signal });
         
-        if (!response.ok) {
-          throw new Error(`Erro na comunicação com o servidor (${response.status})`);
-        }
+        // Requisições paralelas para carregar histórico e cadastros
+        const [resRegistros, resOpcoes] = await Promise.allSettled([
+          fetch(`${API_URL}?acao=obterTodos`, { signal: currentFetchController.signal }).then(r => r.json()),
+          fetch(`${API_URL}?acao=obterOpcoes`, { signal: currentFetchController.signal }).then(r => r.json())
+        ]);
 
-        let data = await response.json();
+        let dataRegistros = resRegistros.status === 'fulfilled' ? resRegistros.value : {};
+        let dataOpcoes = resOpcoes.status === 'fulfilled' ? resOpcoes.value : {};
 
-        if (data.registros && Array.isArray(data.registros)) {
-          todosRegistros = data.registros;
-        } else if (data.movimentacoes && Array.isArray(data.movimentacoes)) {
-          todosRegistros = data.movimentacoes;
-        } else if (Array.isArray(data)) {
-          todosRegistros = data;
+        if (dataRegistros.registros && Array.isArray(dataRegistros.registros)) {
+          todosRegistros = dataRegistros.registros;
+        } else if (dataRegistros.movimentacoes && Array.isArray(dataRegistros.movimentacoes)) {
+          todosRegistros = dataRegistros.movimentacoes;
+        } else if (Array.isArray(dataRegistros)) {
+          todosRegistros = dataRegistros;
         } else {
           todosRegistros = [];
         }
 
-        populateDropdowns(data);
+        populateDropdowns(dataOpcoes, dataRegistros);
+
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error("Erro ao carregar dados:", error);
@@ -277,29 +279,30 @@
       if (el) el.style.display = show ? 'flex' : 'none';
     }
 
-    function populateDropdowns(data) {
+    function populateDropdowns(dataOpcoes, dataRegistros) {
       const selectVeiculo = document.getElementById('filterVeiculo');
       const selectMotorista = document.getElementById('filterMotorista');
       const selectAuxiliar = document.getElementById('filterAuxiliar');
       const selectControlador = document.getElementById('filterControlador');
 
-      let veiculos = data.veiculos || (data.opcoes ? data.opcoes.veiculos : []) || [];
-      let motoristas = data.motoristas || (data.opcoes ? data.opcoes.motoristas : []) || [];
-      let auxiliares = data.auxiliares || (data.opcoes ? data.opcoes.auxiliares : []) || [];
-      let controladores = data.controladores || (data.opcoes ? data.opcoes.controladores : []) || [];
+      // Mapeamento dinâmico de chaves retornadas pelo Backend
+      let veiculos = dataOpcoes.veiculos || dataOpcoes.opcoes?.veiculos || dataRegistros.veiculos || dataRegistros.opcoes?.veiculos || [];
+      let motoristas = dataOpcoes.motoristas || dataOpcoes.opcoes?.motoristas || dataRegistros.motoristas || dataRegistros.opcoes?.motoristas || [];
+      let auxiliares = dataOpcoes.auxiliares || dataOpcoes.opcoes?.auxiliares || dataRegistros.auxiliares || dataRegistros.opcoes?.auxiliares || [];
+      let controladores = dataOpcoes.controladores || dataOpcoes.opcoes?.controladores || dataRegistros.controladores || dataRegistros.opcoes?.controladores || [];
 
-      // Extração fallback das opções diretamente da lista de registros
+      // Extração direta do histórico se a lista da aba Cadastros estiver vazia
       if (todosRegistros.length > 0) {
-        if (veiculos.length === 0) {
+        if (!veiculos || veiculos.length === 0) {
           veiculos = [...new Set(todosRegistros.map(r => r.veiculo || r.placa).filter(Boolean))].sort();
         }
-        if (motoristas.length === 0) {
+        if (!motoristas || motoristas.length === 0) {
           motoristas = [...new Set(todosRegistros.map(r => r.motorista || r.nome).filter(Boolean))].sort();
         }
-        if (auxiliares.length === 0) {
+        if (!auxiliares || auxiliares.length === 0) {
           auxiliares = [...new Set(todosRegistros.map(r => r.auxiliar || r.auxiliares).filter(Boolean))].sort();
         }
-        if (controladores.length === 0) {
+        if (!controladores || controladores.length === 0) {
           const cSaida = todosRegistros.map(r => r.controladorSaida || r.controlador).filter(Boolean);
           const cChegada = todosRegistros.map(r => r.controladorChegada || r.controladorRetorno).filter(Boolean);
           controladores = [...new Set([...cSaida, ...cChegada])].sort();
@@ -322,8 +325,6 @@
     function formatarDataBR(val) {
       if (!val || val === '-' || val === 'null' || val === 'undefined') return '-';
       let str = String(val).trim();
-      
-      // Converte YYYY-MM-DD para DD/MM/YYYY
       if (str.includes('-')) {
         let p = str.split('T')[0].split('-');
         if (p.length === 3) return `${p[2].padStart(2, '0')}/${p[1].padStart(2, '0')}/${p[0]}`;
