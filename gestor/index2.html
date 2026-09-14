@@ -212,6 +212,8 @@
       gap: 8px;
     }
 
+    .btn-search { background-color: var(--primary); color: white; }
+    .btn-search:hover { background-color: var(--primary-hover); }
     .btn-excel { background-color: #107c41; color: white; }
     .btn-pdf { background-color: var(--accent); color: white; }
     .btn-reset { background-color: var(--text-muted); color: white; }
@@ -290,18 +292,18 @@
 
       <div class="filter-grid">
         <div class="filter-group">
-          <label>Data Inicial (DD/MM/AAAA)</label>
-          <input type="text" id="filterDataInicio" placeholder="DD/MM/AAAA" maxlength="10" onkeyup="mascaraData(this)" oninput="aplicarFiltros()">
+          <label>Data Inicial</label>
+          <input type="date" id="filterDataInicio">
         </div>
 
         <div class="filter-group">
-          <label>Data Final (DD/MM/AAAA)</label>
-          <input type="text" id="filterDataFim" placeholder="DD/MM/AAAA" maxlength="10" onkeyup="mascaraData(this)" oninput="aplicarFiltros()">
+          <label>Data Final</label>
+          <input type="date" id="filterDataFim">
         </div>
 
         <div class="filter-group">
           <label>Status</label>
-          <select id="filterStatus" onchange="aplicarFiltros()">
+          <select id="filterStatus">
             <option value="">Todos</option>
             <option value="EM_TRANSITO">Em Trânsito</option>
             <option value="CONCLUIDO">Concluído</option>
@@ -310,32 +312,33 @@
 
         <div class="filter-group">
           <label>Veículo / Placa</label>
-          <select id="filterVeiculo" onchange="aplicarFiltros()">
+          <select id="filterVeiculo">
             <option value="">Todos os veículos...</option>
           </select>
         </div>
 
         <div class="filter-group">
           <label>Motorista</label>
-          <select id="filterMotorista" onchange="aplicarFiltros()">
+          <select id="filterMotorista">
             <option value="">Todos os motoristas...</option>
           </select>
         </div>
 
         <div class="filter-group">
           <label>Controlador</label>
-          <select id="filterControlador" onchange="aplicarFiltros()">
+          <select id="filterControlador">
             <option value="">Todos os controladores...</option>
           </select>
         </div>
 
         <div class="filter-group">
           <label>Obs / Destino</label>
-          <input type="text" id="filterObs" placeholder="Digite para buscar..." oninput="aplicarFiltros()">
+          <input type="text" id="filterObs" placeholder="Digite para buscar...">
         </div>
       </div>
 
       <div class="action-buttons">
+        <button class="btn btn-search" onclick="aplicarFiltros()">🔍 Buscar</button>
         <button class="btn btn-excel" onclick="exportarExcel()">📊 Exportar Excel (.xlsx)</button>
         <button class="btn btn-pdf" onclick="exportarPDF()">📄 Gerar PDF Oficial</button>
         <button class="btn btn-reset" onclick="limparFiltros()">🔄 Limpar Filtros</button>
@@ -383,21 +386,9 @@
         }
 
         populateDropdowns(data);
-        aplicarFiltros();
+        renderTable(true);
       } catch (error) {
         console.error("Erro ao carregar dados da API Vercel:", error);
-      }
-    }
-
-    function mascaraData(input) {
-      let v = input.value.replace(/\D/g, "");
-      if (v.length > 8) v = v.substring(0, 8);
-      if (v.length >= 5) {
-        input.value = `${v.substring(0, 2)}/${v.substring(2, 4)}/${v.substring(4, 8)}`;
-      } else if (v.length >= 3) {
-        input.value = `${v.substring(0, 2)}/${v.substring(2, 4)}`;
-      } else {
-        input.value = v;
       }
     }
 
@@ -439,14 +430,15 @@
       return dataStr;
     }
 
-    function converterBRParaDate(dataBR) {
-      if (!dataBR || dataBR.length !== 10) return null;
-      const partes = dataBR.split('/');
-      if (partes.length !== 3) return null;
-      const dia = parseInt(partes[0], 10);
-      const mes = parseInt(partes[1], 10) - 1;
-      const ano = parseInt(partes[2], 10);
-      return new Date(ano, mes, dia);
+    function formatarDataISO(dataStr) {
+      if (!dataStr) return '';
+      if (dataStr.includes('/')) {
+        const p = dataStr.split('/');
+        if (p.length === 3) {
+          return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+        }
+      }
+      return dataStr.substring(0, 10);
     }
 
     function checarEmTransito(item) {
@@ -456,15 +448,15 @@
     }
 
     function aplicarFiltros() {
-      const dataInicioStr = document.getElementById('filterDataInicio').value;
-      const dataFimStr = document.getElementById('filterDataFim').value;
+      const dataInicio = document.getElementById('filterDataInicio').value;
+      const dataFim = document.getElementById('filterDataFim').value;
       const status = document.getElementById('filterStatus').value;
       const veiculo = document.getElementById('filterVeiculo').value;
       const motorista = document.getElementById('filterMotorista').value;
       const controlador = document.getElementById('filterControlador').value;
       const obsTexto = document.getElementById('filterObs').value.trim().toLowerCase();
 
-      const temFiltroAtivo = (dataInicioStr.length === 10) || (dataFimStr.length === 10) || status || veiculo || motorista || controlador || obsTexto !== '';
+      const temFiltroAtivo = dataInicio || dataFim || status || veiculo || motorista || controlador || obsTexto !== '';
 
       if (!temFiltroAtivo) {
         registrosFiltrados = [];
@@ -473,15 +465,11 @@
         return;
       }
 
-      const dateInicioObj = converterBRParaDate(dataInicioStr);
-      const dateFimObj = converterBRParaDate(dataFimStr);
-
       registrosFiltrados = todosRegistros.filter(item => {
-        const itemDataBR = formatarDataBR(item.data);
-        const itemDateObj = converterBRParaDate(itemDataBR);
+        const itemDataIso = formatarDataISO(item.data);
 
-        if (dateInicioObj && itemDateObj && itemDateObj < dateInicioObj) return false;
-        if (dateFimObj && itemDateObj && itemDateObj > dateFimObj) return false;
+        if (dataInicio && itemDataIso < dataInicio) return false;
+        if (dataFim && itemDataIso > dataFim) return false;
 
         const emTransito = checarEmTransito(item);
         if (status === 'EM_TRANSITO' && !emTransito) return false;
@@ -512,7 +500,7 @@
       tbody.innerHTML = '';
 
       if (semFiltros) {
-        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 20px; color: var(--text-muted);">Utilize os filtros acima para pesquisar registros.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 20px; color: var(--text-muted);">Utilize os filtros acima e clique em "Buscar" para pesquisar registros.</td></tr>`;
         return;
       }
 
@@ -589,7 +577,9 @@
       document.getElementById('filterMotorista').value = '';
       document.getElementById('filterControlador').value = '';
       document.getElementById('filterObs').value = '';
-      aplicarFiltros();
+      registrosFiltrados = [];
+      renderTable(true);
+      updateKPIs();
     }
 
     function exportarExcel() {
