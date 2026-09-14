@@ -85,10 +85,6 @@
         <div class="kpi-title">Concluídos</div>
         <div class="kpi-value" id="kpiConcluidos">0</div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-title">KM Rodados (Total)</div>
-        <div class="kpi-value" id="kpiKmTotal">0 km</div>
-      </div>
     </div>
 
     <!-- Filtros de Pesquisa -->
@@ -154,17 +150,13 @@
               <th>Auxiliar</th>
               <th>Saída (Data / Hora)</th>
               <th>Retorno (Data / Hora)</th>
-              <th>Comb. Saída</th>
-              <th>Comb. Retorno</th>
-              <th>KM Saída</th>
-              <th>KM Retorno</th>
               <th>Controladores (S / R)</th>
               <th>Obs / Destino</th>
             </tr>
           </thead>
           <tbody id="gestorTableBody">
             <tr>
-              <td colspan="12" style="text-align:center; padding: 20px; color: var(--text-muted);">
+              <td colspan="8" style="text-align:center; padding: 20px; color: var(--text-muted);">
                 Nenhuma busca realizada. Utilize os filtros acima para pesquisar.
               </td>
             </tr>
@@ -261,22 +253,20 @@
       controladores.forEach(c => selectControlador.innerHTML += `<option value="${c}">${c}</option>`);
     }
 
-    // Extrator de valores imune à variações de caixa de texto ou acentuação
+    // Extrator de valores imune a variações de caixa de texto ou acentuação
     function pegarValor(item, ...chaves) {
       if (!item) return '-';
       
-      // Procura direta pelas chaves exatas passadas
       for (let k of chaves) {
         if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') {
           return String(item[k]).trim();
         }
       }
 
-      // Procura insensível à caixa (case-insensitive) nas chaves do objeto
       const itemKeys = Object.keys(item);
       for (let k of chaves) {
-        const keyLower = k.toLowerCase().replace(/[^a-z0-0]/g, '');
-        const matchKey = itemKeys.find(ik => ik.toLowerCase().replace(/[^a-z0-0]/g, '') === keyLower);
+        const keyLower = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const matchKey = itemKeys.find(ik => ik.toLowerCase().replace(/[^a-z0-9]/g, '') === keyLower);
         if (matchKey && item[matchKey] !== undefined && item[matchKey] !== null && String(item[matchKey]).trim() !== '' && String(item[matchKey]).trim() !== '-') {
           return String(item[matchKey]).trim();
         }
@@ -285,7 +275,7 @@
       return '-';
     }
 
-    // Parser universal para tratar datas nativas do Apps Script / ISO / Strings BR
+    // Parser universal para tratar datas e horas
     function parseDataGlobal(val) {
       if (!val || val === '-' || val === 'null' || val === 'undefined') return { data: '-', hora: '-' };
       
@@ -350,7 +340,6 @@
 
     function executarBusca() {
       showLoading(true);
-      // Se os dados não foram carregados previamente, recarrega antes de aplicar os filtros
       if (todosRegistros.length === 0) {
         loadData().then(() => {
           aplicarFiltros();
@@ -375,7 +364,7 @@
       const obsTexto = document.getElementById('filterObs').value.trim().toLowerCase();
 
       registrosFiltrados = todosRegistros.filter(item => {
-        let rawDate = pegarValor(item, 'dataSaida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída');
+        let rawDate = pegarValor(item, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída');
         let dateValISO = extrairDataISO(rawDate);
 
         if (dataInicio && dateValISO && dateValISO < dataInicio) return false;
@@ -415,7 +404,7 @@
       tbody.innerHTML = '';
 
       if (registrosFiltrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding: 20px; color: var(--text-muted);">Nenhum registro encontrado com os filtros aplicados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px; color: var(--text-muted);">Nenhum registro encontrado com os filtros aplicados.</td></tr>`;
         return;
       }
 
@@ -424,7 +413,7 @@
         const isEmTransito = checarEmTransito(item);
         
         // Data e Hora de Saída
-        const rawSaida = pegarValor(item, 'dataSaida', 'dataHoraSaida', 'data', 'criadoEm', 'saida', 'Data Saída', 'Data/Hora Saída');
+        const rawSaida = pegarValor(item, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída', 'Data/Hora Saída');
         const rawHoraSaida = pegarValor(item, 'horarioSaida', 'horaSaida', 'horaS', 'Hora Saída');
         let parsedSaida = parseDataGlobal(rawSaida);
         let horaSaidaFinal = rawHoraSaida !== '-' ? rawHoraSaida : parsedSaida.hora;
@@ -434,14 +423,6 @@
         const rawHoraChegada = pegarValor(item, 'horarioChegada', 'horaRetorno', 'horaChegada', 'horaR', 'Hora Retorno');
         let parsedChegada = parseDataGlobal(rawChegada);
         let horaChegadaFinal = rawHoraChegada !== '-' ? rawHoraChegada : parsedChegada.hora;
-
-        // Combustível
-        const combSaida = pegarValor(item, 'combustivelSaida', 'combSaida', 'nivelSaida', 'tanqueSaida', 'combustivel', 'Combustível Saída', 'Comb. Saída', 'Nível Combustível Saída');
-        const combChegada = pegarValor(item, 'combustivelChegada', 'combRetorno', 'combustivelRet', 'nivelRetorno', 'tanqueRetorno', 'Combustível Retorno', 'Comb. Retorno', 'Nível Combustível Retorno');
-
-        // KM
-        const kmSaidaVal = pegarValor(item, 'kmSaida', 'kmInicial', 'odometroSaida', 'kmS', 'KM Saída', 'KM Inicial', 'Km Saida');
-        const kmChegadaVal = pegarValor(item, 'kmChegada', 'kmRetorno', 'kmFinal', 'odometroRetorno', 'kmR', 'KM Retorno', 'KM Final', 'Km Retorno');
 
         // Demais Campos
         const veiculoVal = pegarValor(item, 'veiculo', 'placa', 'vtr', 'Veículo');
@@ -462,10 +443,6 @@
           <td>${auxiliarVal}</td>
           <td>📅 ${parsedSaida.data}<br>⏰ ${horaSaidaFinal}</td>
           <td>${isEmTransito ? '<em>Em andamento</em>' : `📅 ${parsedChegada.data}<br>⏰ ${horaChegadaFinal}`}</td>
-          <td>⛽ ${combSaida}</td>
-          <td>⛽ ${isEmTransito ? '-' : combChegada}</td>
-          <td>📏 ${kmSaidaVal !== '-' ? kmSaidaVal + ' km' : '-'}</td>
-          <td>📏 ${isEmTransito ? '-' : (kmChegadaVal !== '-' ? kmChegadaVal + ' km' : '-')}</td>
           <td>
             <small><strong>S:</strong> ${ctrlSaidaVal}</small><br>
             <small><strong>R:</strong> ${ctrlChegadaVal}</small>
@@ -482,17 +459,6 @@
       document.getElementById('kpiTotal').innerText = registrosFiltrados.length;
       document.getElementById('kpiTransito').innerText = registrosFiltrados.filter(r => checarEmTransito(r)).length;
       document.getElementById('kpiConcluidos').innerText = registrosFiltrados.filter(r => !checarEmTransito(r)).length;
-
-      let kmTotal = 0;
-      registrosFiltrados.forEach(r => {
-        const kmS = pegarValor(r, 'kmSaida', 'kmInicial', 'odometroSaida', 'kmS', 'KM Saída', 'KM Inicial');
-        const kmC = pegarValor(r, 'kmChegada', 'kmRetorno', 'kmFinal', 'odometroRetorno', 'kmR', 'KM Retorno', 'KM Final');
-        if (!checarEmTransito(r) && kmC !== '-' && kmS !== '-') {
-          const dif = parseFloat(kmC) - parseFloat(kmS);
-          if (!isNaN(dif) && dif > 0) kmTotal += dif;
-        }
-      });
-      document.getElementById('kpiKmTotal').innerText = `${kmTotal} km`;
     }
 
     function limparFiltros() {
@@ -505,16 +471,28 @@
       document.getElementById('filterControlador').value = '';
       document.getElementById('filterObs').value = '';
 
-      registrosFiltrados = [...todosRegistros];
-      renderTable();
-      updateKPIs();
+      registrosFiltrados = [];
+      
+      const tbody = document.getElementById('gestorTableBody');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; padding: 20px; color: var(--text-muted);">
+            Nenhuma busca realizada. Utilize os filtros acima para pesquisar.
+          </td>
+        </tr>
+      `;
+
+      document.getElementById('kpiTotal').innerText = '0';
+      document.getElementById('kpiTransito').innerText = '0';
+      document.getElementById('kpiConcluidos').innerText = '0';
+
       showLoading(false);
     }
 
     function exportarExcel() {
       if (registrosFiltrados.length === 0) return alert("Nenhum registro para exportar.");
       const dataToExport = registrosFiltrados.map(r => {
-        const parsedS = parseDataGlobal(pegarValor(r, 'dataSaida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída'));
+        const parsedS = parseDataGlobal(pegarValor(r, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída'));
         const parsedR = parseDataGlobal(pegarValor(r, 'dataChegada', 'dataRetorno', 'dataRet', 'dataHoraRetorno', 'Data Retorno'));
         return {
           "Data Saída": parsedS.data,
@@ -526,10 +504,6 @@
           "Auxiliar": pegarValor(r, 'auxiliar', 'auxiliares', 'Auxiliar'),
           "Controlador Saída": pegarValor(r, 'controladorSaida', 'controlador', 'controladorS', 'Controlador Saída'),
           "Controlador Chegada": pegarValor(r, 'controladorChegada', 'controladorRetorno', 'controladorR', 'Controlador Retorno'),
-          "Comb. Saída": pegarValor(r, 'combustivelSaida', 'combSaida', 'nivelSaida', 'tanqueSaida', 'Combustível Saída'),
-          "Comb. Retorno": pegarValor(r, 'combustivelChegada', 'combRetorno', 'nivelRetorno', 'tanqueRetorno', 'Combustível Retorno'),
-          "KM Saída": pegarValor(r, 'kmSaida', 'kmInicial', 'odometroSaida', 'KM Saída'),
-          "KM Retorno": pegarValor(r, 'kmChegada', 'kmRetorno', 'kmFinal', 'odometroRetorno', 'KM Retorno'),
           "Observações": pegarValor(r, 'obsSaida', 'observacoes', 'obs', 'destino', 'Observação'),
           "Status": checarEmTransito(r) ? "EM_TRANSITO" : "CONCLUIDO"
         };
@@ -549,31 +523,28 @@
       doc.text("Relatório de Controle de Viaturas - Base GIG", 14, 18);
 
       const tableData = registrosFiltrados.map(r => {
-        const parsedS = parseDataGlobal(pegarValor(r, 'dataSaida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída'));
+        const parsedS = parseDataGlobal(pegarValor(r, 'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data', 'criadoEm', 'Saída', 'Data Saída'));
         const parsedR = parseDataGlobal(pegarValor(r, 'dataChegada', 'dataRetorno', 'dataRet', 'dataHoraRetorno', 'Data Retorno'));
         return [
           parsedS.data,
+          parsedS.hora,
           !checarEmTransito(r) ? parsedR.data : '-',
+          !checarEmTransito(r) ? parsedR.hora : '-',
           pegarValor(r, 'veiculo', 'placa', 'vtr', 'Veículo'),
           pegarValor(r, 'motorista', 'nome', 'Motorista'),
           pegarValor(r, 'auxiliar', 'auxiliares', 'Auxiliar'),
           pegarValor(r, 'controladorSaida', 'controlador', 'controladorS', 'Controlador Saída'),
-          parsedS.hora,
-          pegarValor(r, 'kmSaida', 'kmInicial', 'odometroSaida', 'KM Saída'),
-          pegarValor(r, 'combustivelSaida', 'combSaida', 'nivelSaida', 'tanqueSaida', 'Combustível Saída'),
           pegarValor(r, 'controladorChegada', 'controladorRetorno', 'controladorR', 'Controlador Retorno'),
-          !checarEmTransito(r) ? parsedR.hora : '-',
-          !checarEmTransito(r) ? pegarValor(r, 'kmChegada', 'kmRetorno', 'kmFinal', 'odometroRetorno', 'KM Retorno') : '-',
-          !checarEmTransito(r) ? pegarValor(r, 'combustivelChegada', 'combRetorno', 'nivelRetorno', 'tanqueRetorno', 'Combustível Retorno') : '-',
+          pegarValor(r, 'obsSaida', 'observacoes', 'obs', 'destino', 'Observação'),
           checarEmTransito(r) ? 'Em Trânsito' : 'Concluído'
         ];
       });
 
       doc.autoTable({
-        head: [['Data Saída', 'Data Ret.', 'Veículo', 'Motorista', 'Auxiliar', 'Ctrl. Saída', 'Hora Saída', 'KM Saída', 'Comb. Saída', 'Ctrl. Retorno', 'Hora Ret.', 'KM Ret.', 'Comb. Ret.', 'Status']],
+        head: [['Data Saída', 'Hora Saída', 'Data Ret.', 'Hora Ret.', 'Veículo', 'Motorista', 'Auxiliar', 'Ctrl. Saída', 'Ctrl. Retorno', 'Obs', 'Status']],
         body: tableData,
         startY: 25,
-        styles: { fontSize: 6.5, cellPadding: 2, halign: 'center', valign: 'middle' },
+        styles: { fontSize: 7, cellPadding: 2, halign: 'center', valign: 'middle' },
         headStyles: { fillColor: [0, 43, 73], textColor: [255, 255, 255], fontStyle: 'bold' }
       });
 
