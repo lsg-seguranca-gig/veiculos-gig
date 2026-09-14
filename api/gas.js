@@ -4,13 +4,13 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      // Repassa os parâmetros da URL (ex: ?acao=obterOpcoes ou ?acao=obterTodos)
-      const queryString = new URLSearchParams(req.query).toString();
-      const targetUrl = queryString ? `${GOOGLE_SCRIPT_URL}?${queryString}` : GOOGLE_SCRIPT_URL;
+      // Garante o repasse correto de parâmetros como ?acao=obterTodos
+      const queryParams = new URLSearchParams(req.query).toString();
+      const targetUrl = queryParams ? `${GOOGLE_SCRIPT_URL}?${queryParams}` : GOOGLE_SCRIPT_URL;
 
       const response = await fetch(targetUrl, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Accept': 'application/json' },
         redirect: 'follow'
       });
 
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     } 
     
     else if (req.method === 'POST') {
-      // Repassa o corpo da requisição POST para o Apps Script
+      // Repassa o corpo POST formatado em JSON string
       const response = await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
