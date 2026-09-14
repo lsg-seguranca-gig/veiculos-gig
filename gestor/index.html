@@ -18,36 +18,16 @@
       --text-muted: #6b7280;
       --border-color: #e5e7eb;
       --primary: #002b49;
-      --primary-hover: #00406c;
       --accent: #e30613;
       --success: #10b981;
       --warning: #f59e0b;
       --table-header: #f8fafc;
-      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg-body);
-      color: var(--text-main);
-      padding: 24px 16px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .app-container {
-      width: 100%;
-      max-width: 1400px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-body); color: var(--text-main); padding: 24px 16px; display: flex; justify-content: center; }
+    .app-container { width: 100%; max-width: 1400px; display: flex; flex-direction: column; gap: 24px; }
 
     header {
       background-color: var(--card-bg);
@@ -63,29 +43,10 @@
       border-top: 5px solid var(--accent);
     }
 
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .header-logo {
-      height: 48px;
-      width: auto;
-      object-fit: contain;
-    }
-
-    .header-title h1 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .header-title p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
+    .header-brand { display: flex; align-items: center; gap: 16px; }
+    .header-logo { height: 48px; width: auto; object-fit: contain; }
+    .header-title h1 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+    .header-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
 
     .btn-nav {
       background-color: var(--bg-body);
@@ -98,139 +59,59 @@
       font-weight: 600;
     }
 
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-    }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .kpi-card { background-color: var(--card-bg); border-radius: 16px; padding: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; }
+    .kpi-title { font-size: 0.825rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-value { font-size: 1.8rem; font-weight: 800; color: var(--text-main); }
 
-    .kpi-card {
-      background-color: var(--card-bg);
-      border-radius: 16px;
-      padding: 20px;
-      border: 1px solid var(--border-color);
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .card { background-color: var(--card-bg); border-radius: 16px; padding: 20px 24px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
 
-    .kpi-title {
-      font-size: 0.825rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-    }
+    .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .filter-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+    input, select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.875rem; background-color: var(--bg-body); color: var(--text-main); }
 
-    .kpi-value {
-      font-size: 1.8rem;
-      font-weight: 800;
-      color: var(--text-main);
-    }
-
-    .card {
-      background-color: var(--card-bg);
-      border-radius: 16px;
-      padding: 20px 24px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border-color);
-    }
-
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 16px;
-    }
-
-    .filter-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 14px;
-      margin-bottom: 16px;
-    }
-
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    input, select {
-      padding: 10px 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 0.875rem;
-      background-color: var(--bg-body);
-      color: var(--text-main);
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .btn {
-      padding: 10px 18px;
-      font-size: 0.875rem;
-      font-weight: 700;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
+    .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+    .btn { padding: 10px 18px; font-size: 0.875rem; font-weight: 700; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
     .btn-search { background-color: var(--primary); color: white; }
     .btn-excel { background-color: #107c41; color: white; }
     .btn-pdf { background-color: var(--accent); color: white; }
     .btn-reset { background-color: var(--text-muted); color: white; }
 
     .table-container { overflow-x: auto; margin-top: 16px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.825rem; }
+    th { background-color: var(--table-header); color: var(--text-muted); font-weight: 700; padding: 10px 12px; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle; white-space: nowrap; }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.825rem;
-    }
-
-    th {
-      background-color: var(--table-header);
-      color: var(--text-muted);
-      font-weight: 700;
-      padding: 10px 12px;
-      border-bottom: 2px solid var(--border-color);
-      white-space: nowrap;
-    }
-
-    td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border-color);
-      vertical-align: middle;
-      white-space: nowrap;
-    }
-
-    .badge {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
-
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
     .badge-transito { background-color: rgba(245, 158, 11, 0.15); color: var(--warning); }
     .badge-concluido { background-color: rgba(16, 185, 129, 0.15); color: var(--success); }
+
+    /* Modal / Overlay de Carregamento */
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      z-index: 9999;
+    }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 5px solid var(--border-color);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+
+  <div id="loadingScreen" class="loading-overlay">
+    <div class="spinner"></div>
+    <p style="margin-top: 16px; font-weight: 600; color: var(--primary);">Carregando informações...</p>
+  </div>
 
   <div class="app-container">
     <header>
@@ -288,30 +169,22 @@
 
         <div class="filter-group">
           <label>Veículo / Placa</label>
-          <select id="filterVeiculo">
-            <option value="">Todos os veículos...</option>
-          </select>
+          <select id="filterVeiculo"><option value="">Todos os veículos...</option></select>
         </div>
 
         <div class="filter-group">
           <label>Motorista</label>
-          <select id="filterMotorista">
-            <option value="">Todos os motoristas...</option>
-          </select>
+          <select id="filterMotorista"><option value="">Todos os motoristas...</option></select>
         </div>
 
         <div class="filter-group">
           <label>Auxiliar</label>
-          <select id="filterAuxiliar">
-            <option value="">Todos os auxiliares...</option>
-          </select>
+          <select id="filterAuxiliar"><option value="">Todos os auxiliares...</option></select>
         </div>
 
         <div class="filter-group">
           <label>Controlador</label>
-          <select id="filterControlador">
-            <option value="">Todos os controladores...</option>
-          </select>
+          <select id="filterControlador"><option value="">Todos os controladores...</option></select>
         </div>
 
         <div class="filter-group">
@@ -321,7 +194,7 @@
       </div>
 
       <div class="action-buttons">
-        <button class="btn btn-search" onclick="aplicarFiltros(true)">🔍 Buscar</button>
+        <button class="btn btn-search" onclick="executarBusca()">🔍 Buscar</button>
         <button class="btn btn-excel" onclick="exportarExcel()">📊 Exportar Excel (.xlsx)</button>
         <button class="btn btn-pdf" onclick="exportarPDF()">📄 Gerar PDF Oficial</button>
         <button class="btn btn-reset" onclick="limparFiltros()">🔄 Limpar Filtros</button>
@@ -349,7 +222,13 @@
               <th>Obs / Destino</th>
             </tr>
           </thead>
-          <tbody id="gestorTableBody"></tbody>
+          <tbody id="gestorTableBody">
+            <tr>
+              <td colspan="12" style="text-align:center; padding: 20px; color: var(--text-muted);">
+                Nenhuma busca realizada. Utilize os filtros acima para pesquisar.
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -359,31 +238,33 @@
     const API_URL = "/api/gas";
     let todosRegistros = [];
     let registrosFiltrados = [];
+    let currentFetchController = null; // Controla a interrupção da busca
 
     async function loadData() {
-      const tbody = document.getElementById('gestorTableBody');
-      tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>`;
-
+      showLoading(true);
       try {
-        let response = await fetch(`${API_URL}?acao=obterTodos`);
+        currentFetchController = new AbortController();
+        let response = await fetch(`${API_URL}?acao=obterTodos`, { signal: currentFetchController.signal });
         let data = await response.json();
 
-        if (Array.isArray(data)) {
-          todosRegistros = data;
-        } else if (data.registros && Array.isArray(data.registros)) {
+        if (data.registros && Array.isArray(data.registros)) {
           todosRegistros = data.registros;
-        } else if (data.dados && Array.isArray(data.dados)) {
-          todosRegistros = data.dados;
-        } else if (data.historico && Array.isArray(data.historico)) {
-          todosRegistros = data.historico;
+        } else if (Array.isArray(data)) {
+          todosRegistros = data;
         }
 
         populateDropdowns(data);
-        aplicarFiltros(true);
       } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; color: red; padding: 20px;">Erro ao carregar dados do servidor.</td></tr>`;
+        if (error.name !== 'AbortError') {
+          console.error("Erro ao carregar dados:", error);
+        }
+      } finally {
+        showLoading(false);
       }
+    }
+
+    function showLoading(show) {
+      document.getElementById('loadingScreen').style.display = show ? 'flex' : 'none';
     }
 
     function populateDropdowns(data) {
@@ -396,23 +277,6 @@
       let motoristas = data.motoristas || [];
       let auxiliares = data.auxiliares || [];
       let controladores = data.controladores || [];
-
-      if (todosRegistros.length > 0) {
-        if (veiculos.length === 0) {
-          veiculos = [...new Set(todosRegistros.map(r => r.veiculo || r.placa).filter(Boolean))].sort();
-        }
-        if (motoristas.length === 0) {
-          motoristas = [...new Set(todosRegistros.map(r => r.nome || r.motorista).filter(Boolean))].sort();
-        }
-        if (auxiliares.length === 0) {
-          auxiliares = [...new Set(todosRegistros.map(r => r.auxiliar || r.auxiliares || r.ajudante).filter(Boolean))].sort();
-        }
-        if (controladores.length === 0) {
-          const ctrlS = todosRegistros.map(r => r.controladorSaida || r.controlador).filter(Boolean);
-          const ctrlC = todosRegistros.map(r => r.controladorChegada).filter(Boolean);
-          controladores = [...new Set([...ctrlS, ...ctrlC])].sort();
-        }
-      }
 
       selectVeiculo.innerHTML = '<option value="">Todos os veículos...</option>';
       veiculos.forEach(v => selectVeiculo.innerHTML += `<option value="${v}">${v}</option>`);
@@ -427,31 +291,43 @@
       controladores.forEach(c => selectControlador.innerHTML += `<option value="${c}">${c}</option>`);
     }
 
-    function normalizarData(val) {
-      if (!val) return '';
+    function formatarDataBR(val) {
+      if (!val || val === '-') return '-';
       let str = String(val).trim();
-      if (str.includes('/')) {
-        const p = str.split('/');
-        if (p.length === 3) return `${p[2].substring(0,4)}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+      
+      // Formato YYYY-MM-DD
+      if (str.includes('-')) {
+        let p = str.split('T')[0].split('-');
+        if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
       }
-      if (str.includes('-')) return str.substring(0, 10);
-      return '';
+      return str;
     }
 
-    function formatarDataBR(val) {
-      const iso = normalizarData(val);
-      if (!iso) return val || '-';
-      const p = iso.split('-');
-      return `${p[2]}/${p[1]}/${p[0]}`;
+    function formatarHoraBR(val) {
+      if (!val || val === '-') return '-';
+      let str = String(val).trim();
+      if (str.includes(':')) {
+        let p = str.split(':');
+        return `${p[0].padStart(2, '0')}:${p[1].padStart(2, '0')}`;
+      }
+      return str;
     }
 
     function checarEmTransito(item) {
       if (item.status === 'EM_TRANSITO') return true;
-      if (!item.horarioChegada || item.horarioChegada.trim() === '' || item.horarioChegada === '-') return true;
+      if (!item.dataChegada || item.dataChegada === '-' || item.dataChegada.trim() === '') return true;
       return false;
     }
 
-    function aplicarFiltros(exibirGeral = false) {
+    function executarBusca() {
+      showLoading(true);
+      setTimeout(() => {
+        aplicarFiltros();
+        showLoading(false);
+      }, 300);
+    }
+
+    function aplicarFiltros() {
       const dataInicio = document.getElementById('filterDataInicio').value;
       const dataFim = document.getElementById('filterDataFim').value;
       const status = document.getElementById('filterStatus').value;
@@ -462,33 +338,22 @@
       const obsTexto = document.getElementById('filterObs').value.trim().toLowerCase();
 
       registrosFiltrados = todosRegistros.filter(item => {
-        const itemDataIso = normalizarData(item.data || item.dataSaida);
-
-        if (dataInicio && itemDataIso && itemDataIso < dataInicio) return false;
-        if (dataFim && itemDataIso && itemDataIso > dataFim) return false;
+        let dateVal = item.dataSaida || item.data;
+        if (dataInicio && dateVal && dateVal < dataInicio) return false;
+        if (dataFim && dateVal && dateVal > dataFim) return false;
 
         const emTransito = checarEmTransito(item);
         if (status === 'EM_TRANSITO' && !emTransito) return false;
         if (status === 'CONCLUIDO' && emTransito) return false;
 
-        const itemVeiculo = item.veiculo || item.placa;
-        if (veiculo && itemVeiculo !== veiculo) return false;
-        
-        const itemMotorista = item.nome || item.motorista;
-        if (motorista && itemMotorista !== motorista) return false;
-
-        const itemAuxiliar = item.auxiliar || item.auxiliares || item.ajudante;
-        if (auxiliar && itemAuxiliar !== auxiliar) return false;
-        
-        if (controlador && (item.controladorSaida !== controlador && item.controladorChegada !== controlador && item.controlador !== controlador)) return false;
+        if (veiculo && item.veiculo !== veiculo) return false;
+        if (motorista && item.motorista !== motorista) return false;
+        if (auxiliar && item.auxiliar !== auxiliar) return false;
+        if (controlador && (item.controladorSaida !== controlador && item.controladorChegada !== controlador)) return false;
 
         if (obsTexto !== '') {
           const obsS = (item.obsSaida || '').toLowerCase();
-          const obsR = (item.obsChegada || '').toLowerCase();
-          const destino = (item.destino || '').toLowerCase();
-          if (!obsS.includes(obsTexto) && !obsR.includes(obsTexto) && !destino.includes(obsTexto)) {
-            return false;
-          }
+          if (!obsS.includes(obsTexto)) return false;
         }
 
         return true;
@@ -511,8 +376,11 @@
         const tr = document.createElement('tr');
         const isEmTransito = checarEmTransito(item);
         
-        const dataSaidaBR = formatarDataBR(item.data || item.dataSaida);
-        const dataChegadaBR = item.dataChegada ? formatarDataBR(item.dataChegada) : dataSaidaBR;
+        const dataSaidaBR = formatarDataBR(item.dataSaida || item.data);
+        const horaSaidaBR = formatarHoraBR(item.horarioSaida);
+
+        const dataChegadaBR = formatarDataBR(item.dataChegada);
+        const horaChegadaBR = formatarHoraBR(item.horarioChegada);
 
         tr.innerHTML = `
           <td>
@@ -520,22 +388,21 @@
               ? `<span class="badge badge-transito">Em Trânsito</span>` 
               : `<span class="badge badge-concluido">Concluído</span>`}
           </td>
-          <td><strong>${item.veiculo || item.placa || '-'}</strong></td>
-          <td>${item.nome || item.motorista || '-'}</td>
-          <td>${item.auxiliar || item.auxiliares || item.ajudante || '-'}</td>
-          <td>📅 ${dataSaidaBR}<br>⏰ ${item.horarioSaida || '-'}</td>
-          <td>${isEmTransito ? '<em>Em andamento</em>' : `📅 ${dataChegadaBR}<br>⏰ ${item.horarioChegada || '-'}`}</td>
+          <td><strong>${item.veiculo || '-'}</strong></td>
+          <td>${item.motorista || '-'}</td>
+          <td>${item.auxiliar || '-'}</td>
+          <td>📅 ${dataSaidaBR}<br>⏰ ${horaSaidaBR}</td>
+          <td>${isEmTransito ? '<em>Em andamento</em>' : `📅 ${dataChegadaBR}<br>⏰ ${horaChegadaBR}`}</td>
           <td>⛽ ${item.combustivelSaida || '-'}</td>
           <td>⛽ ${isEmTransito ? '-' : (item.combustivelChegada || '-')}</td>
           <td>📏 ${item.kmSaida ? item.kmSaida + ' km' : '-'}</td>
           <td>📏 ${isEmTransito ? '-' : (item.kmChegada ? item.kmChegada + ' km' : '-')}</td>
           <td>
-            <small><strong>S:</strong> ${item.controladorSaida || item.controlador || '-'}</small><br>
+            <small><strong>S:</strong> ${item.controladorSaida || '-'}</small><br>
             <small><strong>R:</strong> ${item.controladorChegada || '-'}</small>
           </td>
           <td>
-            <small><strong>Saída:</strong> ${item.obsSaida || item.destino || 'N/A'}</small><br>
-            <small><strong>Retorno:</strong> ${item.obsChegada || 'N/A'}</small>
+            <small>${item.obsSaida || 'N/A'}</small>
           </td>
         `;
         tbody.appendChild(tr);
@@ -558,6 +425,12 @@
     }
 
     function limparFiltros() {
+      // Interrompe qualquer busca em andamento
+      if (currentFetchController) {
+        currentFetchController.abort();
+      }
+
+      // Limpa os campos de busca
       document.getElementById('filterDataInicio').value = '';
       document.getElementById('filterDataFim').value = '';
       document.getElementById('filterStatus').value = '';
@@ -566,27 +439,45 @@
       document.getElementById('filterAuxiliar').value = '';
       document.getElementById('filterControlador').value = '';
       document.getElementById('filterObs').value = '';
-      aplicarFiltros(true);
+
+      registrosFiltrados = [];
+      
+      // Reseta a tabela para o estado inicial (sem informações)
+      const tbody = document.getElementById('gestorTableBody');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="12" style="text-align:center; padding: 20px; color: var(--text-muted);">
+            Nenhuma busca realizada. Utilize os filtros acima para pesquisar.
+          </td>
+        </tr>
+      `;
+
+      // Reseta Indicadores (KPIs)
+      document.getElementById('kpiTotal').innerText = '0';
+      document.getElementById('kpiTransito').innerText = '0';
+      document.getElementById('kpiConcluidos').innerText = '0';
+      document.getElementById('kpiKmTotal').innerText = '0 km';
+
+      showLoading(false);
     }
 
     function exportarExcel() {
       if (registrosFiltrados.length === 0) return alert("Nenhum registro para exportar.");
       const dataToExport = registrosFiltrados.map(r => ({
-        "Data Saída": formatarDataBR(r.data || r.dataSaida),
-        "Data Retorno": r.dataChegada ? formatarDataBR(r.dataChegada) : formatarDataBR(r.data || r.dataSaida),
-        "Veículo": r.veiculo || r.placa,
-        "Motorista": r.nome || r.motorista,
-        "Auxiliar": r.auxiliar || r.auxiliares || r.ajudante,
-        "Controlador Saída": r.controladorSaida || r.controlador,
-        "Hora Saída": r.horarioSaida,
-        "KM Saída": r.kmSaida,
-        "Comb. Saída": r.combustivelSaida,
-        "Obs Saída": r.obsSaida || r.destino,
+        "Data Saída": formatarDataBR(r.dataSaida),
+        "Hora Saída": formatarHoraBR(r.horarioSaida),
+        "Data Retorno": formatarDataBR(r.dataChegada),
+        "Hora Retorno": formatarHoraBR(r.horarioChegada),
+        "Veículo": r.veiculo,
+        "Motorista": r.motorista,
+        "Auxiliar": r.auxiliar,
+        "Controlador Saída": r.controladorSaida,
         "Controlador Chegada": r.controladorChegada,
-        "Hora Chegada": r.horarioChegada,
-        "KM Chegada": r.kmChegada,
-        "Comb. Chegada": r.combustivelChegada,
-        "Obs Chegada": r.obsChegada,
+        "Comb. Saída": r.combustivelSaida,
+        "Comb. Retorno": r.combustivelChegada,
+        "KM Saída": r.kmSaida,
+        "KM Retorno": r.kmChegada,
+        "Observações": r.obsSaida,
         "Status": checarEmTransito(r) ? "EM_TRANSITO" : "CONCLUIDO"
       }));
       const ws = XLSX.utils.json_to_sheet(dataToExport);
@@ -604,17 +495,17 @@
       doc.text("Relatório de Controle de Viaturas - Base GIG", 14, 18);
 
       const tableData = registrosFiltrados.map(r => [
-        formatarDataBR(r.data || r.dataSaida),
-        !checarEmTransito(r) ? (formatarDataBR(r.dataChegada) || formatarDataBR(r.data || r.dataSaida)) : '-',
-        r.veiculo || r.placa || '-',
-        r.nome || r.motorista || '-',
-        r.auxiliar || r.auxiliares || r.ajudante || '-',
-        r.controladorSaida || r.controlador || '-',
-        r.horarioSaida || '-',
+        formatarDataBR(r.dataSaida),
+        !checarEmTransito(r) ? formatarDataBR(r.dataChegada) : '-',
+        r.veiculo || '-',
+        r.motorista || '-',
+        r.auxiliar || '-',
+        r.controladorSaida || '-',
+        formatarHoraBR(r.horarioSaida),
         r.kmSaida ? `${r.kmSaida} km` : '-',
         r.combustivelSaida || '-',
         r.controladorChegada || '-',
-        !checarEmTransito(r) ? (r.horarioChegada || '-') : '-',
+        !checarEmTransito(r) ? formatarHoraBR(r.horarioChegada) : '-',
         !checarEmTransito(r) ? (r.kmChegada ? `${r.kmChegada} km` : '-') : '-',
         !checarEmTransito(r) ? (r.combustivelChegada || '-') : '-',
         checarEmTransito(r) ? 'Em Trânsito' : 'Concluído'
