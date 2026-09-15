@@ -1,477 +1,322 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle de Saída e Retorno dos Veículos de Atendimento - Base GIG</title>
-  <link rel="icon" href="icone lsg.ico" type="image/x-icon" />
+var NOME_ABA_MOVIMENTACOES = 'Movimentacoes';
+var NOME_ABA_VEICULOS = 'Cadastros_Veiculos';
+var NOME_ABA_FUNCIONARIOS = 'Cadastros_Funcionarios';
+var NOME_ABA_CONTROLADORES = 'Cadastros_Controladores';
 
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+function doGet(e) {
+  var acao = e ? e.parameter.acao : null;
 
-  <style>
-    /* RESET E ESTILOS BASE */
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    body { background-color: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
+  if (acao === 'obterTodos' || acao === 'obterMovimentacoes') {
+    return responderJSON(obterMovimentacoesComOpcoes());
+  }
 
-    /* HEADER INSTITUCIONAL */
-    header { 
-      background-color: #ffffff; 
-      border-bottom: 1px solid #e2e8f0; 
-      padding: 1rem 2rem; 
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+  if (acao === 'obterOpcoes') {
+    return responderJSON(obterOpcoes());
+  }
+
+  return responderJSON(obterMovimentacoesComOpcoes());
+}
+
+function doPost(e) {
+  try {
+    var dados = JSON.parse(e.postData.contents);
+    var acao = dados.acao;
+
+    if (acao === 'registrarSaida') {
+      return responderJSON(registrarSaida(dados));
     }
-    .logo-container { display: flex; align-items: center; gap: 16px; }
-    .logo-img { max-height: 44px; width: auto; object-fit: contain; }
-    .header-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+    if (acao === 'registrarRetorno') {
+      return responderJSON(registrarRetorno(dados));
+    }
 
-    /* CONTAINER PRINCIPAL */
-    main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
+    return responderJSON({ status: 'erro', mensagem: 'Ação POST não reconhecida.' });
+  } catch (err) {
+    return responderJSON({ status: 'erro', mensagem: err.toString() });
+  }
+}
 
-    /* CARDS E FORMULÁRIOS */
-    .card { background: #ffffff; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
-    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+function registrarSaida(dados) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var aba = ss.getSheetByName(NOME_ABA_MOVIMENTACOES) || ss.getSheetByName('Movimentações') || ss.getSheets()[0];
+  
+  var tz = ss.getSpreadsheetTimeZone();
+  var agora = new Date();
+  var dataHoje = Utilities.formatDate(agora, tz, "dd/MM/yyyy HH:mm");
 
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group.full-width { grid-column: 1 / -1; }
-    .form-group label { font-size: 0.85rem; font-weight: 600; color: #475569; }
-    .form-control { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; background-color: #ffffff; }
-    .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-    textarea.form-control { resize: vertical; min-height: 60px; }
-
-    /* BOTÕES */
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 16px; font-size: 0.875rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: background-color 0.2s; }
-    .btn-primary { background-color: #2563eb; color: #ffffff; }
-    .btn-primary:hover { background-color: #1d4ed8; }
-    .btn-success { background-color: #16a34a; color: #ffffff; }
-    .btn-success:hover { background-color: #15803d; }
-    .btn-outline { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; }
-    .btn-outline:hover { background-color: #f1f5f9; }
-    .btn-secondary { background-color: #64748b; color: #ffffff; }
-    .btn-secondary:hover { background-color: #475569; }
-    .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
-
-    /* TABELA DE REGISTROS */
-    .table-container { background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 900px; }
-    th, td { border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 0.85rem; vertical-align: middle; }
-    th { background-color: #f8fafc; font-weight: 600; color: #475569; }
-    tr:hover { background-color: #f8fafc; }
-
-    /* BADGES DE STATUS */
-    .badge-transito { background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
-    .badge-concluido { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
-
-    /* JANELA MODAL */
-    .modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-content { background: #ffffff; padding: 1.75rem; border-radius: 8px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .modal-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
-    .modal-footer { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 8px; }
-
-    /* OVERLAY DE CARREGAMENTO */
-    #overlayProcessando { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); color: white; font-size: 18px; font-weight: 600; justify-content: center; align-items: center; z-index: 2000; }
-  </style>
-</head>
-<body>
-
-  <div id="overlayProcessando">Carregando dados...</div>
-
-  <!-- HEADER INSTITUCIONAL -->
-  <header>
-    <div class="logo-container">
-      <img src="./logo lsg.png" alt="Logo LSG Sky Chefs" class="logo-img">
-      <span class="header-title">Controle de Saída e Retorno dos Veículos de Atendimento - Base GIG</span>
-    </div>
-    <button class="btn btn-outline" onclick="buscarDados()">
-      <i data-lucide="refresh-cw"></i> Atualizar Tabela
-    </button>
-  </header>
-
-  <main>
-    <!-- FORMULÁRIO DE REGISTRO DE SAÍDA -->
-    <div class="card">
-      <h2 class="card-title"><i data-lucide="log-out"></i> Registrar Nova Saída de Veículo</h2>
-      <form id="formSaida" onsubmit="salvarSaida(event)">
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="saidaVeiculo">Veículo *</label>
-            <select id="saidaVeiculo" class="form-control" required>
-              <option value="">Selecione...</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="saidaMotorista">Motorista *</label>
-            <select id="saidaMotorista" class="form-control" required>
-              <option value="">Selecione...</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="saidaAuxiliares">Auxiliar(es)</label>
-            <select id="saidaAuxiliares" class="form-control">
-              <option value="">Nenhum / Selecione...</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="saidaControlador">Controlador de Saída *</label>
-            <select id="saidaControlador" class="form-control" required>
-              <option value="">Selecione...</option>
-            </select>
-          </div>
-
-          <div class="form-group full-width">
-            <label for="saidaObs">Observações / Destino</label>
-            <textarea id="saidaObs" class="form-control" placeholder="Voo, posição ou destino..."></textarea>
-          </div>
-        </div>
-
-        <div style="margin-top: 1rem; text-align: right;">
-          <button type="submit" class="btn btn-primary">
-            <i data-lucide="check"></i> Confirmar Saída
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <!-- TABELA RELATÓRIO / PAINEL DE ACOMPANHAMENTO -->
-    <div class="card">
-      <h2 class="card-title"><i data-lucide="truck"></i> Veículos em Atendimento / Histórico</h2>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Status</th>
-              <th>Veículo</th>
-              <th>Motorista</th>
-              <th>Auxiliar(es)</th>
-              <th>Data/Hora Saída</th>
-              <th>Controlador Saída</th>
-              <th>Data/Hora Retorno</th>
-              <th>Controlador Retorno</th>
-              <th>Observações</th>
-              <th style="text-align: center;">Ação</th>
-            </tr>
-          </thead>
-          <tbody id="tabelaRelatorio">
-            <tr><td colspan="11" style="text-align:center;">Carregando dados...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-
-  <!-- MODAL DE REGISTRO DE RETORNO -->
-  <div id="modalRetorno" class="modal-backdrop">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title"><i data-lucide="log-in"></i> Registrar Retorno</h3>
-        <button class="btn btn-outline btn-sm" onclick="fecharModalRetorno()" style="border:none; cursor:pointer;">&times;</button>
-      </div>
-      <form id="formModalRetorno" onsubmit="salvarRetornoModal(event)">
-        <input type="hidden" id="modalRetornoId">
-        
-        <p style="font-size: 0.88rem; color: #475569; margin-bottom: 1rem;" id="modalInfoVeiculo"></p>
-
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="modalControladorRetorno">Controlador de Retorno *</label>
-          <select id="modalControladorRetorno" class="form-control" required>
-            <option value="">Selecione o Controlador...</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="modalObsRetorno">Observações do Retorno</label>
-          <textarea id="modalObsRetorno" class="form-control" placeholder="Observações adicionais (opcional)..."></textarea>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="fecharModalRetorno()">Cancelar</button>
-          <button type="submit" class="btn btn-success">
-            <i data-lucide="check-circle-2"></i> Confirmar Retorno
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    lucide.createIcons();
-
-    const URL_PROXY = '/api/gas'; 
-    let todosRegistros = [];
-
-    window.onload = function() {
-      buscarDados();
-    };
-
-    function pegarValor(item, ...chaves) {
-      if (!item) return '-';
-      for (let k of chaves) {
-        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') {
-          return String(item[k]).trim();
-        }
+  var proximoId = 1;
+  if (aba.getLastRow() > 1) {
+    var ultimosIds = aba.getRange(2, 1, aba.getLastRow() - 1, 1).getValues();
+    var maxId = 0;
+    for (var i = 0; i < ultimosIds.length; i++) {
+      var idNum = parseInt(ultimosIds[i][0], 10);
+      if (!isNaN(idNum) && idNum > maxId) {
+        maxId = idNum;
       }
-      return '-';
     }
+    proximoId = maxId + 1;
+  }
 
-    function formatarDataHoraExibicao(dataStr, horaStr) {
-      if (!dataStr || dataStr === '-') return '-';
-      if (horaStr && horaStr !== '-') {
-        return `${dataStr} ${horaStr}`;
-      }
-      return dataStr;
-    }
+  var headers = aba.getRange(1, 1, 1, aba.getLastColumn()).getValues()[0].map(function(h) {
+    return normalizarTexto(String(h));
+  });
 
-    function buscarDados() {
-      document.getElementById('overlayProcessando').style.display = 'flex';
-      
-      fetch(`${URL_PROXY}?acao=obterTodos`)
-        .then(async res => {
-          const contentType = res.headers.get("content-type");
-          if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`Erro do servidor (${res.status}): ${errText.slice(0, 100)}`);
-          }
-          if (contentType && contentType.includes("application/json")) {
-            return res.json();
-          } else {
-            const text = await res.text();
-            throw new Error(`Resposta não é JSON: ${text.slice(0, 100)}`);
-          }
-        })
-        .then(resposta => {
-          document.getElementById('overlayProcessando').style.display = 'none';
-          
-          let movimentacoes = [];
-          
-          if (resposta && Array.isArray(resposta.registros)) {
-            movimentacoes = resposta.registros;
-          } else if (resposta && Array.isArray(resposta.movimentacoes)) {
-            movimentacoes = resposta.movimentacoes;
-          } else if (Array.isArray(resposta)) {
-            movimentacoes = resposta;
-          } else {
-            throw new Error("Formato de resposta inesperado do servidor.");
-          }
-
-          todosRegistros = movimentacoes.filter(r => r && r.id);
-
-          popularDropdownsFormularios(resposta, todosRegistros);
-          renderizarTabela(todosRegistros);
-        })
-        .catch(err => {
-          document.getElementById('overlayProcessando').style.display = 'none';
-          console.error("Erro ao carregar dados:", err);
-          document.getElementById('tabelaRelatorio').innerHTML = `
-            <tr>
-              <td colspan="11" style="color:#dc2626; text-align:center; padding: 1.5rem;">
-                Erro ao carregar dados da planilha. Verifique a URL do Web App.<br>
-                <small style="color: #64748b;">Detalhe: ${err.message}</small>
-              </td>
-            </tr>`;
-        });
-    }
-
-    function popularDropdownsFormularios(resposta, registros) {
-      let veiculos = resposta.veiculos || [];
-      let motoristas = resposta.motoristas || [];
-      let auxiliares = resposta.auxiliares || [];
-      let controladores = resposta.controladores || [];
-
-      if (!veiculos.length || !motoristas.length || !auxiliares.length || !controladores.length) {
-        const vSet = new Set(), mSet = new Set(), aSet = new Set(), cSet = new Set();
-        registros.forEach(r => {
-          const v = pegarValor(r, 'veiculo', 'Placa', 'VTR');
-          const m = pegarValor(r, 'motorista', 'Nome Motorista');
-          const a = pegarValor(r, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Ajudante');
-          const cs = pegarValor(r, 'controladorSaida', 'controladorS');
-          const cr = pegarValor(r, 'controladorChegada', 'controladorRetorno');
-
-          if (v !== '-') vSet.add(v);
-          if (m !== '-') mSet.add(m);
-          if (a !== '-') aSet.add(a);
-          if (cs !== '-') cSet.add(cs);
-          if (cr !== '-') cSet.add(cr);
-        });
-
-        if (!veiculos.length) veiculos = Array.from(vSet);
-        if (!motoristas.length) motoristas = Array.from(mSet);
-        if (!auxiliares.length) auxiliares = Array.from(aSet);
-        if (!controladores.length) controladores = Array.from(cSet);
-      }
-
-      preencherSelect('saidaVeiculo', veiculos.sort(), 'Selecione o Veículo...');
-      preencherSelect('saidaMotorista', motoristas.sort(), 'Selecione o Motorista...');
-      preencherSelect('saidaAuxiliares', auxiliares.sort(), 'Nenhum / Selecione...');
-      preencherSelect('saidaControlador', controladores.sort(), 'Selecione o Controlador...');
-      preencherSelect('modalControladorRetorno', controladores.sort(), 'Selecione o Controlador...');
-    }
-
-    function preencherSelect(elemId, lista, textoPadrao) {
-      const select = document.getElementById(elemId);
-      select.innerHTML = `<option value="">${textoPadrao}</option>`;
-      lista.forEach(item => {
-        if (!item) return;
-        const option = document.createElement('option');
-        option.value = item;
-        option.textContent = item;
-        select.appendChild(option);
-      });
-    }
-
-    function renderizarTabela(registros) {
-      const tbody = document.getElementById('tabelaRelatorio');
-      tbody.innerHTML = '';
-
-      if (registros.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 2rem;">Nenhum registro de movimentação.</td></tr>';
+  var novaLinha = new Array(headers.length).fill('');
+  
+  function preencherCampo(nomesPossiveis, valor) {
+    for (var i = 0; i < nomesPossiveis.length; i++) {
+      var idx = headers.indexOf(normalizarTexto(nomesPossiveis[i]));
+      if (idx !== -1) {
+        novaLinha[idx] = valor;
         return;
       }
+    }
+  }
 
-      [...registros].reverse().forEach(r => {
-        const tr = document.createElement('tr');
-        
-        const status = pegarValor(r, 'status', 'Status');
-        const emTransito = (status === 'EM_TRANSITO' || status === 'EM TRÂNSITO' || !r.dataChegada || r.dataChegada === '-');
+  novaLinha[0] = proximoId;
+  preencherCampo(['Data Saida', 'Data/Hora Saida', 'Data Saída', 'Data/Hora Saída', 'Saída', 'Data/Hora'], dataHoje);
+  preencherCampo(['Veiculo', 'Veículo', 'Placa', 'VTR'], dados.veiculo || '');
+  preencherCampo(['Motorista', 'Nome Motorista'], dados.motorista || '');
+  preencherCampo(['Auxiliar', 'Nome Auxiliar', 'Auxiliares', 'Ajudante'], dados.auxiliar || dados.auxiliares || '');
+  preencherCampo(['Controlador Saida', 'Controlador Saída', 'Controlador S', 'Controlador'], dados.controladorSaida || '');
+  preencherCampo(['Observacao', 'Observação', 'Destino', 'Obs', 'Observacoes'], dados.obsSaida || dados.observacoes || '');
 
-        const veiculoVal = pegarValor(r, 'veiculo', 'Placa', 'VTR');
-        const motoristaVal = pegarValor(r, 'motorista', 'Nome Motorista');
-        const auxiliarVal = pegarValor(r, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Ajudante');
-        const ctrlSaidaVal = pegarValor(r, 'controladorSaida', 'controladorS');
-        const ctrlChegadaVal = pegarValor(r, 'controladorChegada', 'controladorRetorno');
-        const obsVal = pegarValor(r, 'obsSaida', 'observacoes', 'obs', 'destino');
+  aba.appendRow(novaLinha);
 
-        const dataSaidaFmt = formatarDataHoraExibicao(r.dataSaida, r.horarioSaida);
-        const dataChegadaFmt = emTransito ? '-' : formatarDataHoraExibicao(r.dataChegada, r.horarioChegada);
+  return { status: 'sucesso', mensagem: 'Saída registrada com sucesso!', id: proximoId };
+}
 
-        tr.innerHTML = `
-          <td><strong>#${r.id}</strong></td>
-          <td><span class="${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
-          <td>${veiculoVal}</td>
-          <td>${motoristaVal}</td>
-          <td>${auxiliarVal}</td>
-          <td>${dataSaidaFmt}</td>
-          <td>${ctrlSaidaVal}</td>
-          <td>${dataChegadaFmt}</td>
-          <td>${ctrlChegadaVal}</td>
-          <td>${obsVal}</td>
-          <td style="text-align: center;">
-            ${emTransito 
-              ? `<button class="btn btn-success btn-sm" onclick="abrirModalRetorno('${r.id}', '${veiculoVal}', '${motoristaVal}')"><i data-lucide="log-in"></i> Retorno</button>`
-              : '<span style="color:#94a3b8; font-size: 0.8rem;">Concluído</span>'
-            }
-          </td>
-        `;
-        tbody.appendChild(tr);
+function registrarRetorno(dados) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var aba = ss.getSheetByName(NOME_ABA_MOVIMENTACOES) || ss.getSheetByName('Movimentações') || ss.getSheets()[0];
+  
+  if (aba.getLastRow() <= 1) {
+    return { status: 'erro', mensagem: 'Nenhum registro encontrado na planilha.' };
+  }
+
+  var tz = ss.getSpreadsheetTimeZone();
+  var agora = new Date();
+  var dataHoje = Utilities.formatDate(agora, tz, "dd/MM/yyyy HH:mm");
+
+  var idProcurado = String(dados.id).trim();
+  var ctrlRetorno = dados.controladorChegada || dados.controladorRetorno || '';
+  var obsRetorno = dados.obsRetorno || dados.observacoes || '';
+
+  var numCols = aba.getLastColumn();
+  var todosOsValores = aba.getRange(1, 1, aba.getLastRow(), numCols).getValues();
+  var headers = todosOsValores[0].map(function(h) { return normalizarTexto(String(h)); });
+
+  function getColIndex(nomesPossiveis) {
+    for (var i = 0; i < nomesPossiveis.length; i++) {
+      var idx = headers.indexOf(normalizarTexto(nomesPossiveis[i]));
+      if (idx !== -1) return idx + 1;
+    }
+    return -1;
+  }
+
+  var colRetornoIndex = getColIndex(['Data Retorno', 'Data Chegada', 'Data/Hora Retorno', 'Retorno', 'Chegada']);
+  var colCtrlRetornoIndex = getColIndex(['Controlador Retorno', 'Controlador Chegada', 'Controlador R']);
+  var colObsIndex = getColIndex(['Observacao', 'Observação', 'Obs', 'Observacoes']);
+
+  for (var i = 1; i < todosOsValores.length; i++) {
+    if (String(todosOsValores[i][0]).trim() === idProcurado) {
+      var linhaPlanilha = i + 1;
+
+      if (colRetornoIndex !== -1) {
+        aba.getRange(linhaPlanilha, colRetornoIndex).setValue(dataHoje);
+      }
+      if (colCtrlRetornoIndex !== -1 && ctrlRetorno) {
+        aba.getRange(linhaPlanilha, colCtrlRetornoIndex).setValue(ctrlRetorno);
+      }
+      if (colObsIndex !== -1 && obsRetorno) {
+        var obsAtual = String(todosOsValores[i][colObsIndex - 1] || '');
+        var novaObs = obsAtual ? (obsAtual + " | Retorno: " + obsRetorno) : obsRetorno;
+        aba.getRange(linhaPlanilha, colObsIndex).setValue(novaObs);
+      }
+
+      return { status: 'sucesso', mensagem: 'Retorno registrado com sucesso!' };
+    }
+  }
+
+  return { status: 'erro', mensagem: 'Registro com ID #' + idProcurado + ' não foi encontrado.' };
+}
+
+function obterMovimentacoesComOpcoes() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tz = ss.getSpreadsheetTimeZone();
+
+  var opcoesCadastradas = obterOpcoes();
+  var abaMov = ss.getSheetByName(NOME_ABA_MOVIMENTACOES);
+  
+  if (!abaMov) {
+    abaMov = ss.getSheetByName('Movimentações') || ss.getSheets()[0];
+  }
+
+  var movimentacoes = [];
+
+  if (abaMov && abaMov.getLastRow() > 1) {
+    var numCols = abaMov.getLastColumn();
+    var todosOsValores = abaMov.getRange(1, 1, abaMov.getLastRow(), numCols).getValues();
+    
+    var headers = todosOsValores[0].map(function(h) { 
+      return normalizarTexto(String(h));
+    });
+    var dados = todosOsValores.slice(1);
+
+    function getVal(linha, nomesPossiveis) {
+      for (var i = 0; i < nomesPossiveis.length; i++) {
+        var busca = normalizarTexto(nomesPossiveis[i]);
+        var idx = headers.indexOf(busca);
+        if (idx !== -1 && linha[idx] !== undefined && linha[idx] !== null && String(linha[idx]).trim() !== '') {
+          return linha[idx];
+        }
+      }
+      return '';
+    }
+
+    function formatarDataHora(val) {
+      if (!val) return { data: '', hora: '' };
+      
+      if (val instanceof Date) {
+        return {
+          data: Utilities.formatDate(val, tz, "dd/MM/yyyy"),
+          hora: Utilities.formatDate(val, tz, "HH:mm")
+        };
+      }
+
+      var str = String(val).trim();
+
+      if (str.indexOf('/') !== -1) {
+        var partesEspaco = str.split(' ');
+        var parteData = partesEspaco[0];
+        var parteHora = partesEspaco[1] || '';
+
+        var dP = parteData.split('/');
+        if (dP.length === 3) {
+          var dia = dP[0].padStart(2, '0');
+          var mes = dP[1].padStart(2, '0');
+          var ano = dP[2];
+          
+          var horaStr = '';
+          if (parteHora && parteHora.indexOf(':') !== -1) {
+            var hP = parteHora.split(':');
+            horaStr = hP[0].padStart(2, '0') + ':' + hP[1].padStart(2, '0');
+          }
+
+          return { data: dia + '/' + mes + '/' + ano, hora: horaStr };
+        }
+      }
+
+      var d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        return {
+          data: Utilities.formatDate(d, tz, "dd/MM/yyyy"),
+          hora: Utilities.formatDate(d, tz, "HH:mm")
+        };
+      }
+
+      return { data: str, hora: '' };
+    }
+
+    for (var i = 0; i < dados.length; i++) {
+      var linha = dados[i];
+      var id = linha[0];
+      if (!id) continue;
+
+      var rawSaida = getVal(linha, [
+        'Data Saida', 'Data/Hora Saida', 'Data Saída', 'Data/Hora Saída', 
+        'Saída', 'Data/Hora', 'Data e Hora de Saida', 'Data e Hora de Saída'
+      ]);
+      
+      var rawRetorno = getVal(linha, [
+        'Data Retorno', 'Data Chegada', 'Data/Hora Retorno', 'Retorno', 
+        'Chegada', 'Data e Hora de Retorno', 'Data e Hora de Chegada'
+      ]);
+
+      var saidaFmt = formatarDataHora(rawSaida);
+      var retornoFmt = formatarDataHora(rawRetorno);
+
+      var kmSaida = getVal(linha, ['Km Saida', 'KM Saída', 'Km Inicial', 'KM Inicial', 'Odometro Saida', 'Hodometro Saida']);
+      var kmRetorno = getVal(linha, ['Km Retorno', 'KM Retorno', 'Km Final', 'KM Final', 'Odometro Retorno', 'Hodometro Retorno']);
+      var combSaida = getVal(linha, ['Combustivel Saida', 'Combustível Saída', 'Comb. Saída', 'Nível Combustível Saída']);
+      var combRetorno = getVal(linha, ['Combustivel Retorno', 'Combustível Retorno', 'Comb. Retorno', 'Nível Combustível Retorno']);
+
+      movimentacoes.push({
+        id: String(id),
+        dataSaida: saidaFmt.data,
+        horarioSaida: saidaFmt.hora,
+        veiculo: getVal(linha, ['Veiculo', 'Veículo', 'Placa', 'VTR']),
+        controladorSaida: getVal(linha, ['Controlador Saida', 'Controlador Saída', 'Controlador S', 'Controlador', 'Controlador de Saída']),
+        motorista: getVal(linha, ['Motorista', 'Nome Motorista', 'Nome do Motorista']),
+        auxiliar: getVal(linha, ['Auxiliar', 'Nome Auxiliar', 'Nome do Auxiliar', 'Auxiliares', 'Ajudante', 'Ajudantes', 'Acompanhante', 'Aux', 'Nome Aux']),
+        dataChegada: retornoFmt.data,
+        horarioChegada: retornoFmt.hora,
+        controladorChegada: getVal(linha, ['Controlador Retorno', 'Controlador Chegada', 'Controlador R', 'Controlador de Retorno']),
+        obsSaida: getVal(linha, ['Observacao', 'Observação', 'Destino', 'Obs', 'Observacoes']),
+        combustivelSaida: String(combSaida),
+        combustivelChegada: String(combRetorno),
+        kmSaida: String(kmSaida),
+        kmChegada: String(kmRetorno),
+        status: (retornoFmt.data && retornoFmt.data !== '-' && retornoFmt.data !== '') ? 'CONCLUIDO' : 'EM_TRANSITO'
       });
-
-      lucide.createIcons();
     }
+  }
 
-    function abrirModalRetorno(id, veiculo, motorista) {
-      document.getElementById('modalRetornoId').value = id;
-      document.getElementById('modalInfoVeiculo').innerHTML = `Registrando retorno para o veículo <strong>${veiculo}</strong> (ID #${id}) - Motorista: <strong>${motorista}</strong>`;
-      document.getElementById('formModalRetorno').reset();
-      document.getElementById('modalRetorno').style.display = 'flex';
+  return {
+    status: 'sucesso',
+    registros: movimentacoes,
+    veiculos: opcoesCadastradas.veiculos,
+    motoristas: opcoesCadastradas.motoristas,
+    auxiliares: opcoesCadastradas.auxiliares,
+    controladores: opcoesCadastradas.controladores
+  };
+}
+
+function obterOpcoes() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  return {
+    veiculos: lerColunaAba(ss, NOME_ABA_VEICULOS),
+    motoristas: lerColunaAba(ss, NOME_ABA_FUNCIONARIOS),
+    auxiliares: lerColunaAba(ss, NOME_ABA_FUNCIONARIOS),
+    controladores: lerColunaAba(ss, NOME_ABA_CONTROLADORES)
+  };
+}
+
+function lerColunaAba(ss, nomeAba) {
+  var aba = ss.getSheetByName(nomeAba);
+  if (!aba) {
+    var sheets = ss.getSheets();
+    for (var i = 0; i < sheets.length; i++) {
+      if (normalizarTexto(sheets[i].getName()) === normalizarTexto(nomeAba)) {
+        aba = sheets[i];
+        break;
+      }
     }
+  }
 
-    function fecharModalRetorno() {
-      document.getElementById('modalRetorno').style.display = 'none';
+  if (!aba || aba.getLastRow() <= 1) return [];
+
+  var valores = aba.getRange(2, 1, aba.getLastRow() - 1, 1).getValues();
+  var lista = [];
+
+  for (var i = 0; i < valores.length; i++) {
+    var val = String(valores[i][0]).trim();
+    if (val !== '' && lista.indexOf(val) === -1) {
+      lista.push(val);
     }
+  }
+  return lista.sort();
+}
 
-    function salvarSaida(event) {
-      event.preventDefault();
-      document.getElementById('overlayProcessando').style.display = 'flex';
+function normalizarTexto(str) {
+  if (!str) return '';
+  return str.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
 
-      const payload = {
-        acao: 'registrarSaida',
-        veiculo: document.getElementById('saidaVeiculo').value,
-        motorista: document.getElementById('saidaMotorista').value,
-        auxiliar: document.getElementById('saidaAuxiliares').value,
-        controladorSaida: document.getElementById('saidaControlador').value,
-        obsSaida: document.getElementById('saidaObs').value
-      };
-
-      fetch(URL_PROXY, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      .then(async res => {
-        const text = await res.text();
-        try {
-          return JSON.parse(text);
-        } catch (e) {
-          throw new Error("Servidor retornou resposta inválida (HTML): " + text.slice(0, 100));
-        }
-      })
-      .then(resposta => {
-        document.getElementById('overlayProcessando').style.display = 'none';
-        if (resposta.status === 'sucesso' || resposta.sucesso) {
-          document.getElementById('formSaida').reset();
-          buscarDados();
-        } else {
-          alert('Erro ao registrar saída: ' + (resposta.mensagem || resposta.erro || 'Erro desconhecido'));
-        }
-      })
-      .catch(err => {
-        document.getElementById('overlayProcessando').style.display = 'none';
-        alert('Erro de comunicação: ' + err.message);
-      });
-    }
-
-    function salvarRetornoModal(event) {
-      event.preventDefault();
-      const ctrlRetorno = document.getElementById('modalControladorRetorno').value;
-      const obsRetorno = document.getElementById('modalObsRetorno').value;
-      const idReg = document.getElementById('modalRetornoId').value;
-
-      fecharModalRetorno();
-      document.getElementById('overlayProcessando').style.display = 'flex';
-
-      const payload = {
-        acao: 'registrarRetorno',
-        id: idReg,
-        controladorChegada: ctrlRetorno,
-        controladorRetorno: ctrlRetorno,
-        obsRetorno: obsRetorno,
-        observacoes: obsRetorno
-      };
-
-      fetch(URL_PROXY, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      .then(async res => {
-        const text = await res.text();
-        try {
-          return JSON.parse(text);
-        } catch (e) {
-          throw new Error("Servidor retornou resposta inválida (HTML): " + text.slice(0, 120));
-        }
-      })
-      .then(resposta => {
-        document.getElementById('overlayProcessando').style.display = 'none';
-        if (resposta.status === 'sucesso' || resposta.sucesso) {
-          buscarDados();
-        } else {
-          alert('Erro ao registrar retorno: ' + (resposta.mensagem || resposta.erro || 'Erro desconhecido'));
-        }
-      })
-      .catch(err => {
-        document.getElementById('overlayProcessando').style.display = 'none';
-        alert('Erro de comunicação: ' + err.message);
-      });
-    }
-  </script>
-</body>
-</html>
+function responderJSON(objeto) {
+  return ContentService
+    .createTextOutput(JSON.stringify(objeto))
+    .setMimeType(ContentService.MimeType.JSON);
+}
