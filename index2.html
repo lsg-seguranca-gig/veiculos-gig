@@ -207,71 +207,64 @@
 
     const URL_PROXY = '/api/gas'; 
     let todosRegistros = [];
-    let opcoesGlobais = null;
 
     window.onload = function() {
       buscarDados();
     };
 
-    // VERIFICA SE O CAMPO DE RETORNO POSSUI UMA DATA/HORA VÁLIDA
-    function verificarTemRetorno(valorDataRetorno) {
-      if (!valorDataRetorno) return false;
-      const str = String(valorDataRetorno).trim();
-      
-      // Se for vazio, traço, undefined, null ou apenas data sem hora incompleta/inválida
-      if (str === "" || str === "-" || str === "undefined" || str === "null") return false;
-      
-      // Verifica se contém números suficientes para ser um timestamp/data real
-      const contemNumeros = /\d/.test(str);
-      return contemNumeros;
+    function pegarValor(item, ...chaves) {
+      if (!item) return '-';
+      for (let k of chaves) {
+        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') {
+          return String(item[k]).trim();
+        }
+      }
+      return '-';
     }
 
-    // FUNÇÃO AUXILIAR PARA FORMATAR DATA E HORA (dd/mm/aaaa hh:mm)
-    function formatarDataHora(stringIso) {
-      if (!stringIso) return '-';
-      const str = String(stringIso).trim();
-      if (str === "" || str === "-" || str === "undefined" || str === "null") return '-';
-
-      const data = new Date(str);
-      if (isNaN(data.getTime())) return str; // Retorna a string original se não for conversível para Date
-
-      const dia = String(data.getDate()).padStart(2, '0');
-      const mes = String(data.getMonth() + 1).padStart(2, '0');
-      const ano = data.getFullYear();
-      const horas = String(data.getHours()).padStart(2, '0');
-      const minutos = String(data.getMinutes()).padStart(2, '0');
-
-      return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+    function formatarDataHoraExibicao(dataStr, horaStr) {
+      if (!dataStr || dataStr === '-') return '-';
+      if (horaStr && horaStr !== '-') {
+        return `${dataStr} ${horaStr}`;
+      }
+      return dataStr;
     }
 
-    // BUSCA DE DADOS COM SUPORTE AOS DOIS FORMATOS DE RESPOSTA
     function buscarDados() {
       document.getElementById('overlayProcessando').style.display = 'flex';
       
-      fetch(`${URL_PROXY}?acao=obterMovimentacoes`)
-        .then(res => {
-          if (!res.ok) throw new Error(`Erro HTTP: status ${res.status}`);
-          return res.json();
+      fetch(`${URL_PROXY}?acao=obterTodos`)
+        .then(async res => {
+          const contentType = res.headers.get("content-type");
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Erro do servidor (${res.status}): ${errText.slice(0, 100)}`);
+          }
+          if (contentType && contentType.includes("application/json")) {
+            return res.json();
+          } else {
+            const text = await res.text();
+            throw new Error(`Resposta não é JSON: ${text.slice(0, 100)}`);
+          }
         })
         .then(resposta => {
           document.getElementById('overlayProcessando').style.display = 'none';
           
           let movimentacoes = [];
-          let opcoes = null;
-
-          if (resposta && resposta.movimentacoes) {
+          
+          if (resposta && Array.isArray(resposta.registros)) {
+            movimentacoes = resposta.registros;
+          } else if (resposta && Array.isArray(resposta.movimentacoes)) {
             movimentacoes = resposta.movimentacoes;
-            opcoes = resposta.opcoes;
           } else if (Array.isArray(resposta)) {
             movimentacoes = resposta;
           } else {
             throw new Error("Formato de resposta inesperado do servidor.");
           }
 
-          todosRegistros = (movimentacoes || []).filter(r => r && r.id && (r.veiculo || r.motorista));
-          opcoesGlobais = opcoes;
+          todosRegistros = movimentacoes.filter(r => r && r.id);
 
-          popularDropdownsFormularios(opcoesGlobais, todosRegistros);
+          popularDropdownsFormularios(resposta, todosRegistros);
           renderizarTabela(todosRegistros);
         })
         .catch(err => {
@@ -287,27 +280,32 @@
         });
     }
 
-    function popularDropdownsFormularios(opcoes, registros) {
-      let veiculos = [], motoristas = [], auxiliares = [], controladores = [];
+    function popularDropdownsFormularios(resposta, registros) {
+      let veiculos = resposta.veiculos || [];
+      let motoristas = resposta.motoristas || [];
+      let auxiliares = resposta.auxiliares || [];
+      let controladores = resposta.controladores || [];
 
-      if (opcoes) {
-        veiculos = opcoes.veiculos || [];
-        motoristas = opcoes.motoristas || opcoes.funcionarios || [];
-        auxiliares = opcoes.auxiliares || opcoes.funcionarios || [];
-        controladores = opcoes.controladores || [];
-      } else {
+      if (!veiculos.length || !motoristas.length || !auxiliares.length || !controladores.length) {
         const vSet = new Set(), mSet = new Set(), aSet = new Set(), cSet = new Set();
         registros.forEach(r => {
-          if (r.veiculo) vSet.add(r.veiculo.trim());
-          if (r.motorista) mSet.add(r.motorista.trim());
-          if (r.auxiliares) r.auxiliares.split(',').forEach(aux => aux.trim() && aSet.add(aux.trim()));
-          if (r.controladorSaida) cSet.add(r.controladorSaida.trim());
-          if (r.controladorRetorno) cSet.add(r.controladorRetorno.trim());
+          const v = pegarValor(r, 'veiculo', 'Placa', 'VTR');
+          const m = pegarValor(r, 'motorista', 'Nome Motorista');
+          const a = pegarValor(r, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Ajudante');
+          const cs = pegarValor(r, 'controladorSaida', 'controladorS');
+          const cr = pegarValor(r, 'controladorChegada', 'controladorRetorno');
+
+          if (v !== '-') vSet.add(v);
+          if (m !== '-') mSet.add(m);
+          if (a !== '-') aSet.add(a);
+          if (cs !== '-') cSet.add(cs);
+          if (cr !== '-') cSet.add(cr);
         });
-        veiculos = Array.from(vSet);
-        motoristas = Array.from(mSet);
-        auxiliares = Array.from(aSet);
-        controladores = Array.from(cSet);
+
+        if (!veiculos.length) veiculos = Array.from(vSet);
+        if (!motoristas.length) motoristas = Array.from(mSet);
+        if (!auxiliares.length) auxiliares = Array.from(aSet);
+        if (!controladores.length) controladores = Array.from(cSet);
       }
 
       preencherSelect('saidaVeiculo', veiculos.sort(), 'Selecione o Veículo...');
@@ -338,27 +336,36 @@
         return;
       }
 
-      registros.forEach(r => {
+      [...registros].reverse().forEach(r => {
         const tr = document.createElement('tr');
         
-        // Determina rigorosamente se o veículo está em trânsito com base na existência real do retorno
-        const temRetorno = verificarTemRetorno(r.dataHoraRetorno);
-        const emTransito = !temRetorno;
-        
+        const status = pegarValor(r, 'status', 'Status');
+        const emTransito = (status === 'EM_TRANSITO' || status === 'EM TRÂNSITO' || !r.dataChegada || r.dataChegada === '-');
+
+        const veiculoVal = pegarValor(r, 'veiculo', 'Placa', 'VTR');
+        const motoristaVal = pegarValor(r, 'motorista', 'Nome Motorista');
+        const auxiliarVal = pegarValor(r, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Ajudante');
+        const ctrlSaidaVal = pegarValor(r, 'controladorSaida', 'controladorS');
+        const ctrlChegadaVal = pegarValor(r, 'controladorChegada', 'controladorRetorno');
+        const obsVal = pegarValor(r, 'obsSaida', 'observacoes', 'obs', 'destino');
+
+        const dataSaidaFmt = formatarDataHoraExibicao(r.dataSaida, r.horarioSaida);
+        const dataChegadaFmt = emTransito ? '-' : formatarDataHoraExibicao(r.dataChegada, r.horarioChegada);
+
         tr.innerHTML = `
           <td><strong>#${r.id}</strong></td>
           <td><span class="${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
-          <td>${r.veiculo || '-'}</td>
-          <td>${r.motorista || '-'}</td>
-          <td>${r.auxiliares || '-'}</td>
-          <td>${formatarDataHora(r.dataHoraSaida)}</td>
-          <td>${r.controladorSaida || '-'}</td>
-          <td>${formatarDataHora(r.dataHoraRetorno)}</td>
-          <td>${r.controladorRetorno || '-'}</td>
-          <td>${r.observacoes || '-'}</td>
+          <td>${veiculoVal}</td>
+          <td>${motoristaVal}</td>
+          <td>${auxiliarVal}</td>
+          <td>${dataSaidaFmt}</td>
+          <td>${ctrlSaidaVal}</td>
+          <td>${dataChegadaFmt}</td>
+          <td>${ctrlChegadaVal}</td>
+          <td>${obsVal}</td>
           <td style="text-align: center;">
             ${emTransito 
-              ? `<button class="btn btn-success btn-sm" onclick="abrirModalRetorno('${r.id}', '${r.veiculo}', '${r.motorista}')"><i data-lucide="log-in"></i> Retorno</button>`
+              ? `<button class="btn btn-success btn-sm" onclick="abrirModalRetorno('${r.id}', '${veiculoVal}', '${motoristaVal}')"><i data-lucide="log-in"></i> Retorno</button>`
               : '<span style="color:#94a3b8; font-size: 0.8rem;">Concluído</span>'
             }
           </td>
@@ -369,7 +376,6 @@
       lucide.createIcons();
     }
 
-    // ABRIR E FECHAR MODAL DE RETORNO
     function abrirModalRetorno(id, veiculo, motorista) {
       document.getElementById('modalRetornoId').value = id;
       document.getElementById('modalInfoVeiculo').innerHTML = `Registrando retorno para o veículo <strong>${veiculo}</strong> (ID #${id}) - Motorista: <strong>${motorista}</strong>`;
@@ -381,7 +387,6 @@
       document.getElementById('modalRetorno').style.display = 'none';
     }
 
-    // SALVAR SAÍDA
     function salvarSaida(event) {
       event.preventDefault();
       document.getElementById('overlayProcessando').style.display = 'flex';
@@ -390,26 +395,31 @@
         acao: 'registrarSaida',
         veiculo: document.getElementById('saidaVeiculo').value,
         motorista: document.getElementById('saidaMotorista').value,
-        auxiliares: document.getElementById('saidaAuxiliares').value,
+        auxiliar: document.getElementById('saidaAuxiliares').value,
         controladorSaida: document.getElementById('saidaControlador').value,
-        observacoes: document.getElementById('saidaObs').value,
-        dataHoraRetorno: "",       // Garante que o retorno inicie zerado
-        controladorRetorno: ""     // Garante que o controlador de retorno inicie zerado
+        obsSaida: document.getElementById('saidaObs').value
       };
 
       fetch(URL_PROXY, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      .then(res => res.json())
+      .then(async res => {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          throw new Error("Servidor retornou resposta inválida (HTML): " + text.slice(0, 100));
+        }
+      })
       .then(resposta => {
         document.getElementById('overlayProcessando').style.display = 'none';
-        if (resposta.status === 'sucesso') {
+        if (resposta.status === 'sucesso' || resposta.sucesso) {
           document.getElementById('formSaida').reset();
           buscarDados();
         } else {
-          alert('Erro ao registrar saída: ' + resposta.mensagem);
+          alert('Erro ao registrar saída: ' + (resposta.mensagem || resposta.erro || 'Erro desconhecido'));
         }
       })
       .catch(err => {
@@ -418,31 +428,43 @@
       });
     }
 
-    // SALVAR RETORNO VIA MODAL
     function salvarRetornoModal(event) {
       event.preventDefault();
+      const ctrlRetorno = document.getElementById('modalControladorRetorno').value;
+      const obsRetorno = document.getElementById('modalObsRetorno').value;
+      const idReg = document.getElementById('modalRetornoId').value;
+
       fecharModalRetorno();
       document.getElementById('overlayProcessando').style.display = 'flex';
 
       const payload = {
         acao: 'registrarRetorno',
-        id: document.getElementById('modalRetornoId').value,
-        controladorRetorno: document.getElementById('modalControladorRetorno').value,
-        observacoes: document.getElementById('modalObsRetorno').value
+        id: idReg,
+        controladorChegada: ctrlRetorno,
+        controladorRetorno: ctrlRetorno,
+        obsRetorno: obsRetorno,
+        observacoes: obsRetorno
       };
 
       fetch(URL_PROXY, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      .then(res => res.json())
+      .then(async res => {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          throw new Error("Servidor retornou resposta inválida (HTML): " + text.slice(0, 120));
+        }
+      })
       .then(resposta => {
         document.getElementById('overlayProcessando').style.display = 'none';
-        if (resposta.status === 'sucesso') {
+        if (resposta.status === 'sucesso' || resposta.sucesso) {
           buscarDados();
         } else {
-          alert('Erro ao registrar retorno: ' + resposta.mensagem);
+          alert('Erro ao registrar retorno: ' + (resposta.mensagem || resposta.erro || 'Erro desconhecido'));
         }
       })
       .catch(err => {
