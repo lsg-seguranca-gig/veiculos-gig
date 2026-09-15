@@ -231,7 +231,7 @@
           motoristas = [...new Set(todosRegistros.map(r => pegarValor(r, 'motorista', 'nome', 'Motorista')).filter(m => m !== '-'))].sort();
         }
         if (!auxiliares || auxiliares.length === 0) {
-          auxiliares = [...new Set(todosRegistros.map(r => pegarValor(r, 'auxiliar', 'auxiliares', 'Auxiliar')).filter(a => a !== '-'))].sort();
+          auxiliares = [...new Set(todosRegistros.map(r => pegarValor(r, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Auxiliar', 'ajudante', 'ajudantes', 'acompanhante', 'aux', 'nomeAuxiliar')).filter(a => a !== '-'))].sort();
         }
         if (!controladores || controladores.length === 0) {
           const cSaida = todosRegistros.map(r => pegarValor(r, 'controladorSaida', 'controlador', 'controladorS', 'Controlador Saída')).filter(c => c !== '-');
@@ -275,18 +275,15 @@
       return '-';
     }
 
-    // Extrator inteligente infalível para Data/Hora de Saída
     function obterDataSaidaBruta(item) {
       if (!item) return '-';
 
-      // 1. Busca por chaves padrão conhecidas
       const valorDireto = pegarValor(item, 
         'dataSaida', 'data_saida', 'saida', 'dataHoraSaida', 'data_hora_saida',
         'dataHoraS', 'dataS', 'data', 'criadoEm', 'created_at', 'timestamp', 'Saída', 'Data Saída', 'Data/Hora Saída'
       );
       if (valorDireto !== '-') return valorDireto;
 
-      // 2. Busca exaustiva por qualquer propriedade do objeto que contenha "saida", "data" ou "created"
       const keys = Object.keys(item);
       const chaveSaida = keys.find(k => {
         const kLow = k.toLowerCase();
@@ -298,7 +295,6 @@
         return String(item[chaveSaida]).trim();
       }
 
-      // 3. Fallback: procurar qualquer chave que pareça conter uma data formatada
       for (let k of keys) {
         let valStr = String(item[k]).trim();
         if (valStr.match(/\d{2}\/\d{2}\/\d{4}/) || valStr.match(/\d{4}-\d{2}-\d{2}/)) {
@@ -311,13 +307,11 @@
       return '-';
     }
 
-    // Parser universal blindado para tratar datas e horas
     function parseDataGlobal(val) {
       if (!val || val === '-' || val === 'null' || val === 'undefined') return { data: '-', hora: '-' };
       
       let str = String(val).trim();
 
-      // Caso o formato seja ISO ou Texto com Data e Hora combinados
       if (str.includes('T') || str.includes(' ')) {
         let parts = str.split(/[T ]/);
         let datePart = parts[0];
@@ -338,7 +332,6 @@
         return { data: dataStr, hora: horaStr };
       }
 
-      // Formato apenas Data (DD/MM/YYYY ou YYYY-MM-DD)
       if (str.includes('/') || str.includes('-')) {
         if (str.includes('-')) {
           let dP = str.split('-');
@@ -347,7 +340,6 @@
         return { data: str, hora: '-' };
       }
 
-      // Tenta parsing por Date Objeto (Timestamp / GAS Date object)
       let d = new Date(isNaN(str) ? str : Number(str));
       if (!isNaN(d.getTime())) {
         let dia = String(d.getDate()).padStart(2, '0');
@@ -422,7 +414,7 @@
         const itemMot = pegarValor(item, 'motorista', 'nome', 'Motorista');
         if (motorista && itemMot !== motorista) return false;
 
-        const itemAux = pegarValor(item, 'auxiliar', 'auxiliares', 'Auxiliar');
+        const itemAux = pegarValor(item, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Auxiliar', 'ajudante', 'ajudantes', 'acompanhante', 'aux', 'nomeAuxiliar');
         if (auxiliar && itemAux !== auxiliar) return false;
 
         const ctrlSaida = pegarValor(item, 'controladorSaida', 'controlador', 'controladorS', 'Controlador Saída');
@@ -454,24 +446,21 @@
         const tr = document.createElement('tr');
         const isEmTransito = checarEmTransito(item);
         
-        // Extração de Saída
         const rawSaida = obterDataSaidaBruta(item);
         const rawHoraSaida = pegarValor(item, 'horarioSaida', 'horaSaida', 'hora_saida', 'horaS', 'horario_saida', 'Hora Saída');
         
         let parsedSaida = parseDataGlobal(rawSaida);
         let horaSaidaFinal = rawHoraSaida !== '-' ? rawHoraSaida : parsedSaida.hora;
 
-        // Extração de Retorno
         const rawChegada = pegarValor(item, 'dataChegada', 'dataRetorno', 'data_retorno', 'data_chegada', 'dataRet', 'dataHoraRetorno', 'dataHoraChegada', 'chegada', 'Data Retorno', 'Data/Hora Retorno');
         const rawHoraChegada = pegarValor(item, 'horarioChegada', 'horaRetorno', 'horaChegada', 'hora_retorno', 'horaR', 'Hora Retorno');
         
         let parsedChegada = parseDataGlobal(rawChegada);
         let horaChegadaFinal = rawHoraChegada !== '-' ? rawHoraChegada : parsedChegada.hora;
 
-        // Demais Campos
         const veiculoVal = pegarValor(item, 'veiculo', 'placa', 'vtr', 'Veículo');
         const motoristaVal = pegarValor(item, 'motorista', 'nome', 'Motorista');
-        const auxiliarVal = pegarValor(item, 'auxiliar', 'auxiliares', 'Auxiliar');
+        const auxiliarVal = pegarValor(item, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Auxiliar', 'ajudante', 'ajudantes', 'acompanhante', 'aux', 'nomeAuxiliar');
         const ctrlSaidaVal = pegarValor(item, 'controladorSaida', 'controlador', 'controladorS', 'Controlador Saída');
         const ctrlChegadaVal = pegarValor(item, 'controladorChegada', 'controladorRetorno', 'controladorR', 'Controlador Retorno');
         const obsVal = pegarValor(item, 'obsSaida', 'observacoes', 'obs', 'destino', 'Observação');
@@ -545,7 +534,7 @@
           "Hora Retorno": parsedR.hora,
           "Veículo": pegarValor(r, 'veiculo', 'placa', 'vtr', 'Veículo'),
           "Motorista": pegarValor(r, 'motorista', 'nome', 'Motorista'),
-          "Auxiliar": pegarValor(r, 'auxiliar', 'auxiliares', 'Auxiliar'),
+          "Auxiliar": pegarValor(r, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Auxiliar', 'ajudante', 'ajudantes', 'acompanhante', 'aux', 'nomeAuxiliar'),
           "Controlador Saída": pegarValor(r, 'controladorSaida', 'controlador', 'controladorS', 'Controlador Saída'),
           "Controlador Chegada": pegarValor(r, 'controladorChegada', 'controladorRetorno', 'controladorR', 'Controlador Retorno'),
           "Observações": pegarValor(r, 'obsSaida', 'observacoes', 'obs', 'destino', 'Observação'),
@@ -576,7 +565,7 @@
           !checarEmTransito(r) ? parsedR.hora : '-',
           pegarValor(r, 'veiculo', 'placa', 'vtr', 'Veículo'),
           pegarValor(r, 'motorista', 'nome', 'Motorista'),
-          pegarValor(r, 'auxiliar', 'auxiliares', 'Auxiliar'),
+          pegarValor(r, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Auxiliar', 'ajudante', 'ajudantes', 'acompanhante', 'aux', 'nomeAuxiliar'),
           pegarValor(r, 'controladorSaida', 'controlador', 'controladorS', 'Controlador Saída'),
           pegarValor(r, 'controladorChegada', 'controladorRetorno', 'controladorR', 'Controlador Retorno'),
           pegarValor(r, 'obsSaida', 'observacoes', 'obs', 'destino', 'Observação'),
