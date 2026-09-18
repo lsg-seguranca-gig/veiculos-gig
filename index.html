@@ -146,9 +146,24 @@
 
     function pegarValor(item, ...chaves) {
       if (!item) return '-';
+      
+      // Procura primeiro pelas chaves exatas passadas no argumento
       for (let k of chaves) {
-        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') return String(item[k]).trim();
+        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') {
+          return String(item[k]).trim();
+        }
       }
+
+      // Procura insensível a maiúsculas/minúsculas caso a chave venha no formato diferente da planilha/API
+      const itemKeys = Object.keys(item);
+      for (let k of chaves) {
+        const keyLower = k.toLowerCase();
+        const foundKey = itemKeys.find(ik => ik.toLowerCase() === keyLower);
+        if (foundKey && item[foundKey] !== undefined && item[foundKey] !== null && String(item[foundKey]).trim() !== '' && String(item[foundKey]).trim() !== '-') {
+          return String(item[foundKey]).trim();
+        }
+      }
+
       return '-';
     }
 
@@ -205,20 +220,25 @@
       [...registros].reverse().forEach(r => {
         const tr = document.createElement('tr');
         
-        // Mapeamento extensivo das chaves vindas da API/Planilha
-        const dataRet = pegarValor(r, 'dataChegada', 'dataRetorno', 'dataChegadaFormatada', 'data');
-        const horaRet = pegarValor(r, 'horarioChegada', 'horarioRetorno', 'horaChegada', 'horaRetorno', 'horario');
-        const ctrlRet = pegarValor(r, 'controladorChegada', 'controladorRetorno', 'controladorChegadaNome');
+        // Mapeamento extensivo de chaves para Datas e Controladores de Retorno
+        const dataRet = pegarValor(r, 'dataChegada', 'dataRetorno', 'dataChegadaFormatada', 'data_chegada', 'data_retorno');
+        const horaRet = pegarValor(r, 'horarioChegada', 'horarioRetorno', 'horaChegada', 'horaRetorno', 'horario_chegada', 'horario_retorno');
+        const ctrlRet = pegarValor(r, 'controladorChegada', 'controladorRetorno', 'controladorChegadaNome', 'controlador_chegada', 'controlador_retorno');
 
-        // Busca de Observações (Saída, Retorno ou Geraes)
-        const obsSaida = pegarValor(r, 'obsSaida', 'observacaoSaida', 'obs', 'observacoes', 'observacao');
-        const obsRet = pegarValor(r, 'obsRetorno', 'observacaoRetorno');
+        // Mapeamento extensivo de Observações (Captura todas as variações de colunas da Planilha/API)
+        const obsSaida = pegarValor(r, 'obsSaida', 'observacaoSaida', 'obs', 'observacoes', 'observacao', 'destino', 'obs_saida', 'observacao_saida');
+        const obsRet = pegarValor(r, 'obsRetorno', 'observacaoRetorno', 'obs_retorno', 'observacao_retorno');
+        
         let obsFinal = '-';
-        if (obsSaida !== '-' && obsRet !== '-') obsFinal = `${obsSaida} | ${obsRet}`;
-        else if (obsSaida !== '-') obsFinal = obsSaida;
-        else if (obsRet !== '-') obsFinal = obsRet;
+        if (obsSaida !== '-' && obsRet !== '-') {
+          obsFinal = `${obsSaida} | ${obsRet}`;
+        } else if (obsSaida !== '-') {
+          obsFinal = obsSaida;
+        } else if (obsRet !== '-') {
+          obsFinal = obsRet;
+        }
 
-        // Determinação real do Status
+        // Determinação do Status
         const temRetornoDataHora = (dataRet !== '-') || (horaRet !== '-');
         const temRetornoCtrl = ctrlRet !== '-';
         const statusDeclarado = String(r.status || '').toUpperCase();
@@ -236,8 +256,8 @@
           <td>${vVal}</td>
           <td>${mVal}</td>
           <td>${pegarValor(r, 'auxiliar', 'auxiliares')}</td>
-          <td>${formatarDataHoraExibicao(pegarValor(r, 'dataSaida', 'data'), pegarValor(r, 'horarioSaida', 'horaSaida', 'horario'))}</td>
-          <td>${pegarValor(r, 'controladorSaida', 'controlador')}</td>
+          <td>${formatarDataHoraExibicao(pegarValor(r, 'dataSaida', 'data_saida'), pegarValor(r, 'horarioSaida', 'horaSaida', 'horario_saida'))}</td>
+          <td>${pegarValor(r, 'controladorSaida', 'controlador_saida')}</td>
           <td>${dtHoraRetornoStr}</td>
           <td>${ctrlRet}</td>
           <td>${obsFinal}</td>
