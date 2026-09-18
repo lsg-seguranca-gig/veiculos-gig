@@ -15,7 +15,10 @@
     .header-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
     main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
     .card { background: #ffffff; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
-    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+    .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px; }
+    .card-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+    .filter-container { display: flex; align-items: center; gap: 8px; }
+    .filter-label { font-size: 0.85rem; font-weight: 600; color: #475569; }
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full-width { grid-column: 1 / -1; }
@@ -66,7 +69,7 @@
   <main>
     <div class="card">
       <h2 class="card-title"><i data-lucide="log-out"></i> Registrar Nova Saída de Veículo</h2>
-      <form id="formSaida" onsubmit="salvarSaida(event)">
+      <form id="formSaida" onsubmit="salvarSaida(event)" style="margin-top: 1.25rem;">
         <div class="form-grid">
           <div class="form-group">
             <label for="saidaVeiculo">Veículo *</label>
@@ -96,7 +99,20 @@
     </div>
 
     <div class="card">
-      <h2 class="card-title"><i data-lucide="truck"></i> Veículos em Atendimento / Histórico</h2>
+      <div class="card-header-flex">
+        <h2 class="card-title"><i data-lucide="truck"></i> Veículos em Atendimento / Histórico</h2>
+        
+        <!-- FILTRO DE STATUS -->
+        <div class="filter-container">
+          <label for="filtroStatus" class="filter-label"><i data-lucide="filter"></i> Filtrar Status:</label>
+          <select id="filtroStatus" class="form-control" onchange="filtrarTabela()" style="width: 180px;">
+            <option value="TODOS" selected>Todos os Registros</option>
+            <option value="EM_TRANSITO">Em Trânsito</option>
+            <option value="CONCLUIDO">Concluídos</option>
+          </select>
+        </div>
+      </div>
+
       <div class="table-container">
         <table>
           <thead>
@@ -162,7 +178,7 @@
           document.getElementById('overlayProcessando').style.display = 'none';
           todosRegistros = (resposta.registros || resposta.movimentacoes || resposta || []).filter(r => r && r.id);
           popularDropdowns(resposta);
-          renderizarTabela(todosRegistros);
+          filtrarTabela();
         })
         .catch(err => {
           document.getElementById('overlayProcessando').style.display = 'none';
@@ -187,24 +203,35 @@
       });
     }
 
+    function filtrarTabela() {
+      const statusSelecionado = document.getElementById('filtroStatus').value;
+      
+      let dadosFiltrados = todosRegistros;
+      if (statusSelecionado === 'EM_TRANSITO') {
+        dadosFiltrados = todosRegistros.filter(r => r.status === 'EM_TRANSITO');
+      } else if (statusSelecionado === 'CONCLUIDO') {
+        dadosFiltrados = todosRegistros.filter(r => r.status === 'CONCLUIDO');
+      }
+
+      renderizarTabela(dadosFiltrados);
+    }
+
     function renderizarTabela(registros) {
       const tbody = document.getElementById('tabelaRelatorio');
       tbody.innerHTML = '';
       if (!registros.length) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 2rem;">Nenhum registro encontrado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 2rem;">Nenhum registro encontrado para este filtro.</td></tr>';
         return;
       }
 
-      [...registros].reverse().forEach(r => {
+      registros.forEach(r => {
         const tr = document.createElement('tr');
         
         const dtRetorno = pegarValor(r, 'dataRetorno', 'dataChegada');
         const ctrlRetorno = pegarValor(r, 'controladorRetorno', 'controladorChegada');
-        
-        // Captura o campo de observações mapeado na Coluna I
         const obsFinal = pegarValor(r, 'observacoes', 'observacao', 'obs', 'obsSaida', 'obsRetorno');
 
-        const ehConcluido = (dtRetorno !== '-') || (ctrlRetorno !== '-');
+        const ehConcluido = r.status === 'CONCLUIDO';
         const emTransito = !ehConcluido;
 
         const vVal = pegarValor(r, 'veiculo');
