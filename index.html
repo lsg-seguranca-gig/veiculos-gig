@@ -5,31 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Controle de Saída e Retorno dos Veículos de Atendimento - Base GIG</title>
   <link rel="icon" href="icone lsg.ico" type="image/x-icon" />
-
   <script src="https://unpkg.com/lucide@latest"></script>
-
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     body { background-color: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
-
-    header { 
-      background-color: #ffffff; 
-      border-bottom: 1px solid #e2e8f0; 
-      padding: 1rem 2rem; 
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
-    }
+    header { background-color: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .logo-container { display: flex; align-items: center; gap: 16px; }
     .logo-img { max-height: 44px; width: auto; object-fit: contain; }
     .header-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
-
     main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
-
     .card { background: #ffffff; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; color: #0f172a; display: flex; align-items: center; gap: 8px; }
-
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full-width { grid-column: 1 / -1; }
@@ -37,33 +23,29 @@
     .form-control { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; background-color: #ffffff; }
     .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
     textarea.form-control { resize: vertical; min-height: 60px; }
-
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 16px; font-size: 0.875rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: background-color 0.2s; }
+    .btn:disabled { opacity: 0.65; cursor: not-allowed; }
     .btn-primary { background-color: #2563eb; color: #ffffff; }
-    .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-primary:hover:not(:disabled) { background-color: #1d4ed8; }
     .btn-success { background-color: #16a34a; color: #ffffff; }
-    .btn-success:hover { background-color: #15803d; }
+    .btn-success:hover:not(:disabled) { background-color: #15803d; }
     .btn-outline { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; }
     .btn-outline:hover { background-color: #f1f5f9; }
     .btn-secondary { background-color: #64748b; color: #ffffff; }
     .btn-secondary:hover { background-color: #475569; }
     .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
-
     .table-container { background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; min-width: 900px; }
     th, td { border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 0.85rem; vertical-align: middle; }
     th { background-color: #f8fafc; font-weight: 600; color: #475569; }
     tr:hover { background-color: #f8fafc; }
-
     .badge-transito { background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
     .badge-concluido { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
-
     .modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); z-index: 1000; justify-content: center; align-items: center; }
     .modal-content { background: #ffffff; padding: 1.75rem; border-radius: 8px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .modal-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
     .modal-footer { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 8px; }
-
     #overlayProcessando { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); color: white; font-size: 18px; font-weight: 600; justify-content: center; align-items: center; z-index: 2000; }
   </style>
 </head>
@@ -88,42 +70,27 @@
         <div class="form-grid">
           <div class="form-group">
             <label for="saidaVeiculo">Veículo *</label>
-            <select id="saidaVeiculo" class="form-control" required>
-              <option value="">Selecione...</option>
-            </select>
+            <select id="saidaVeiculo" class="form-control" required><option value="">Selecione...</option></select>
           </div>
-
           <div class="form-group">
             <label for="saidaMotorista">Motorista *</label>
-            <select id="saidaMotorista" class="form-control" required>
-              <option value="">Selecione...</option>
-            </select>
+            <select id="saidaMotorista" class="form-control" required><option value="">Selecione...</option></select>
           </div>
-
           <div class="form-group">
             <label for="saidaAuxiliares">Auxiliar(es)</label>
-            <select id="saidaAuxiliares" class="form-control">
-              <option value="">Nenhum / Selecione...</option>
-            </select>
+            <select id="saidaAuxiliares" class="form-control"><option value="">Nenhum / Selecione...</option></select>
           </div>
-
           <div class="form-group">
             <label for="saidaControlador">Controlador de Saída *</label>
-            <select id="saidaControlador" class="form-control" required>
-              <option value="">Selecione...</option>
-            </select>
+            <select id="saidaControlador" class="form-control" required><option value="">Selecione...</option></select>
           </div>
-
           <div class="form-group full-width">
             <label for="saidaObs">Observações / Destino</label>
             <textarea id="saidaObs" class="form-control" placeholder="Voo, posição ou destino..."></textarea>
           </div>
         </div>
-
         <div style="margin-top: 1rem; text-align: right;">
-          <button type="submit" class="btn btn-primary">
-            <i data-lucide="check"></i> Confirmar Saída
-          </button>
+          <button type="submit" id="btnSubmitSaida" class="btn btn-primary"><i data-lucide="check"></i> Confirmar Saída</button>
         </div>
       </form>
     </div>
@@ -134,17 +101,7 @@
         <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Status</th>
-              <th>Veículo</th>
-              <th>Motorista</th>
-              <th>Auxiliar(es)</th>
-              <th>Data/Hora Saída</th>
-              <th>Controlador Saída</th>
-              <th>Data/Hora Retorno</th>
-              <th>Controlador Retorno</th>
-              <th>Observações</th>
-              <th style="text-align: center;">Ação</th>
+              <th>ID</th><th>Status</th><th>Veículo</th><th>Motorista</th><th>Auxiliar(es)</th><th>Data/Hora Saída</th><th>Controlador Saída</th><th>Data/Hora Retorno</th><th>Controlador Retorno</th><th>Observações</th><th style="text-align: center;">Ação</th>
             </tr>
           </thead>
           <tbody id="tabelaRelatorio">
@@ -159,30 +116,22 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title"><i data-lucide="log-in"></i> Registrar Retorno</h3>
-        <button class="btn btn-outline btn-sm" onclick="fecharModalRetorno()" style="border:none; cursor:pointer;">&times;</button>
+        <button class="btn btn-outline btn-sm" onclick="fecharModalRetorno()" style="border:none;">&times;</button>
       </div>
       <form id="formModalRetorno" onsubmit="salvarRetornoModal(event)">
         <input type="hidden" id="modalRetornoId">
-        
         <p style="font-size: 0.88rem; color: #475569; margin-bottom: 1rem;" id="modalInfoVeiculo"></p>
-
         <div class="form-group" style="margin-bottom: 1rem;">
           <label for="modalControladorRetorno">Controlador de Retorno *</label>
-          <select id="modalControladorRetorno" class="form-control" required>
-            <option value="">Selecione o Controlador...</option>
-          </select>
+          <select id="modalControladorRetorno" class="form-control" required><option value="">Selecione...</option></select>
         </div>
-
         <div class="form-group">
           <label for="modalObsRetorno">Observações do Retorno</label>
-          <textarea id="modalObsRetorno" class="form-control" placeholder="Observações adicionais (opcional)..."></textarea>
+          <textarea id="modalObsRetorno" class="form-control" placeholder="Observações adicionais..."></textarea>
         </div>
-
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="fecharModalRetorno()">Cancelar</button>
-          <button type="submit" class="btn btn-success">
-            <i data-lucide="check-circle-2"></i> Confirmar Retorno
-          </button>
+          <button type="submit" id="btnSubmitRetorno" class="btn btn-success"><i data-lucide="check-circle-2"></i> Confirmar Retorno</button>
         </div>
       </form>
     </div>
@@ -190,286 +139,165 @@
 
   <script>
     lucide.createIcons();
-
     const URL_PROXY = '/api/gas'; 
     let todosRegistros = [];
 
-    window.onload = function() {
-      buscarDados();
-    };
+    window.onload = function() { buscarDados(); };
 
     function pegarValor(item, ...chaves) {
       if (!item) return '-';
       for (let k of chaves) {
-        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') {
-          return String(item[k]).trim();
-        }
+        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') return String(item[k]).trim();
       }
       return '-';
     }
 
     function formatarDataHoraExibicao(dataStr, horaStr) {
       if (!dataStr || dataStr === '-') return '-';
-      if (horaStr && horaStr !== '-') {
-        return `${dataStr} ${horaStr}`;
-      }
-      return dataStr;
-    }
-
-    async function fetchComRetentativa(url, tentativas = 2) {
-      for (let i = 0; i < tentativas; i++) {
-        try {
-          const res = await fetch(url);
-          if (res.ok) return res;
-        } catch (e) {
-          if (i === tentativas - 1) throw e;
-        }
-      }
-      return fetch(url);
+      return (horaStr && horaStr !== '-') ? `${dataStr} ${horaStr}` : dataStr;
     }
 
     function buscarDados() {
       document.getElementById('overlayProcessando').style.display = 'flex';
-      
-      fetchComRetentativa(`${URL_PROXY}?acao=obterTodos`)
-        .then(async res => {
-          const contentType = res.headers.get("content-type");
-          const text = await res.text();
-          
-          if (!res.ok) {
-            throw new Error(`Erro no servidor (${res.status}): ${text.slice(0, 100)}`);
-          }
-
-          let json;
-          try {
-            json = JSON.parse(text);
-          } catch (e) {
-            throw new Error(`A resposta não veio em formato JSON válido.`);
-          }
-
-          return json;
-        })
+      fetch(`${URL_PROXY}?acao=obterTodos`)
+        .then(res => res.json())
         .then(resposta => {
           document.getElementById('overlayProcessando').style.display = 'none';
-          
-          let movimentacoes = [];
-          
-          if (resposta && Array.isArray(resposta.registros)) {
-            movimentacoes = resposta.registros;
-          } else if (resposta && Array.isArray(resposta.movimentacoes)) {
-            movimentacoes = resposta.movimentacoes;
-          } else if (Array.isArray(resposta)) {
-            movimentacoes = resposta;
-          }
-
-          todosRegistros = movimentacoes.filter(r => r && r.id);
-
-          popularDropdownsFormularios(resposta, todosRegistros);
+          todosRegistros = (resposta.registros || resposta.movimentacoes || resposta || []).filter(r => r && r.id);
+          popularDropdowns(resposta);
           renderizarTabela(todosRegistros);
         })
         .catch(err => {
           document.getElementById('overlayProcessando').style.display = 'none';
-          console.error("Erro ao carregar dados:", err);
-          document.getElementById('tabelaRelatorio').innerHTML = `
-            <tr>
-              <td colspan="11" style="color:#dc2626; text-align:center; padding: 1.5rem;">
-                Falha de conexão com a planilha. Clique em "Atualizar Tabela" para tentar novamente.<br>
-                <small style="color: #64748b;">Detalhe: ${err.message}</small>
-              </td>
-            </tr>`;
+          document.getElementById('tabelaRelatorio').innerHTML = `<tr><td colspan="11" style="color:#dc2626; text-align:center; padding: 1.5rem;">Falha ao carregar dados. <button class="btn btn-sm btn-outline" onclick="buscarDados()">Tentar Novamente</button></td></tr>`;
         });
     }
 
-    function popularDropdownsFormularios(resposta, registros) {
-      let veiculos = resposta.veiculos || [];
-      let motoristas = resposta.motoristas || [];
-      let auxiliares = resposta.auxiliares || [];
-      let controladores = resposta.controladores || [];
-
-      if (!veiculos.length || !motoristas.length || !auxiliares.length || !controladores.length) {
-        const vSet = new Set(), mSet = new Set(), aSet = new Set(), cSet = new Set();
-        registros.forEach(r => {
-          const v = pegarValor(r, 'veiculo', 'Placa', 'VTR');
-          const m = pegarValor(r, 'motorista', 'Nome Motorista');
-          const a = pegarValor(r, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Ajudante');
-          const cs = pegarValor(r, 'controladorSaida', 'controladorS');
-          const cr = pegarValor(r, 'controladorChegada', 'controladorRetorno');
-
-          if (v !== '-') vSet.add(v);
-          if (m !== '-') mSet.add(m);
-          if (a !== '-') aSet.add(a);
-          if (cs !== '-') cSet.add(cs);
-          if (cr !== '-') cSet.add(cr);
-        });
-
-        if (!veiculos.length) veiculos = Array.from(vSet);
-        if (!motoristas.length) motoristas = Array.from(mSet);
-        if (!auxiliares.length) auxiliares = Array.from(aSet);
-        if (!controladores.length) controladores = Array.from(cSet);
-      }
-
-      preencherSelect('saidaVeiculo', veiculos.sort(), 'Selecione o Veículo...');
-      preencherSelect('saidaMotorista', motoristas.sort(), 'Selecione o Motorista...');
-      preencherSelect('saidaAuxiliares', auxiliares.sort(), 'Nenhum / Selecione...');
-      preencherSelect('saidaControlador', controladores.sort(), 'Selecione o Controlador...');
-      preencherSelect('modalControladorRetorno', controladores.sort(), 'Selecione o Controlador...');
+    function popularDropdowns(resp) {
+      preencherSelect('saidaVeiculo', resp.veiculos || [], 'Selecione o Veículo...');
+      preencherSelect('saidaMotorista', resp.motoristas || [], 'Selecione o Motorista...');
+      preencherSelect('saidaAuxiliares', resp.auxiliares || [], 'Nenhum / Selecione...');
+      preencherSelect('saidaControlador', resp.controladores || [], 'Selecione o Controlador...');
+      preencherSelect('modalControladorRetorno', resp.controladores || [], 'Selecione o Controlador...');
     }
 
-    function preencherSelect(elemId, lista, textoPadrao) {
-      const select = document.getElementById(elemId);
-      select.innerHTML = `<option value="">${textoPadrao}</option>`;
+    function preencherSelect(id, lista, padrao) {
+      const select = document.getElementById(id);
+      if (select.children.length > 1) return; // Evita re-renderizar caso já populado
+      select.innerHTML = `<option value="">${padrao}</option>`;
       lista.forEach(item => {
-        if (!item) return;
-        const option = document.createElement('option');
-        option.value = item;
-        option.textContent = item;
-        select.appendChild(option);
+        if (item) select.appendChild(new Option(item, item));
       });
     }
 
     function renderizarTabela(registros) {
       const tbody = document.getElementById('tabelaRelatorio');
       tbody.innerHTML = '';
-
-      if (registros.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 2rem;">Nenhum registro de movimentação encontrado.</td></tr>';
+      if (!registros.length) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 2rem;">Nenhum registro encontrado.</td></tr>';
         return;
       }
 
       [...registros].reverse().forEach(r => {
         const tr = document.createElement('tr');
-        
-        const status = pegarValor(r, 'status', 'Status');
-        const emTransito = (status === 'EM_TRANSITO' || status === 'EM TRÂNSITO' || !r.dataChegada || r.dataChegada === '-');
-
-        const veiculoVal = pegarValor(r, 'veiculo', 'Placa', 'VTR');
-        const motoristaVal = pegarValor(r, 'motorista', 'Nome Motorista');
-        const auxiliarVal = pegarValor(r, 'auxiliar', 'auxiliares', 'Nome Auxiliar', 'Ajudante');
-        const ctrlSaidaVal = pegarValor(r, 'controladorSaida', 'controladorS');
-        const ctrlChegadaVal = pegarValor(r, 'controladorChegada', 'controladorRetorno');
-        const obsVal = pegarValor(r, 'obsSaida', 'observacoes', 'obs', 'destino');
-
-        const dataSaidaFmt = formatarDataHoraExibicao(r.dataSaida, r.horarioSaida);
-        const dataChegadaFmt = emTransito ? '-' : formatarDataHoraExibicao(r.dataChegada, r.horarioChegada);
+        const emTransito = (r.status === 'EM_TRANSITO' || !r.dataChegada || r.dataChegada === '-');
+        const vVal = pegarValor(r, 'veiculo');
+        const mVal = pegarValor(r, 'motorista');
 
         tr.innerHTML = `
           <td><strong>#${r.id}</strong></td>
           <td><span class="${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
-          <td>${veiculoVal}</td>
-          <td>${motoristaVal}</td>
-          <td>${auxiliarVal}</td>
-          <td>${dataSaidaFmt}</td>
-          <td>${ctrlSaidaVal}</td>
-          <td>${dataChegadaFmt}</td>
-          <td>${ctrlChegadaVal}</td>
-          <td>${obsVal}</td>
+          <td>${vVal}</td>
+          <td>${mVal}</td>
+          <td>${pegarValor(r, 'auxiliar')}</td>
+          <td>${formatarDataHoraExibicao(r.dataSaida, r.horarioSaida)}</td>
+          <td>${pegarValor(r, 'controladorSaida')}</td>
+          <td>${emTransito ? '-' : formatarDataHoraExibicao(r.dataChegada, r.horarioChegada)}</td>
+          <td>${pegarValor(r, 'controladorChegada')}</td>
+          <td>${pegarValor(r, 'obsSaida')}</td>
           <td style="text-align: center;">
             ${emTransito 
-              ? `<button class="btn btn-success btn-sm" onclick="abrirModalRetorno('${r.id}', '${veiculoVal}', '${motoristaVal}')"><i data-lucide="log-in"></i> Retorno</button>`
+              ? `<button class="btn btn-success btn-sm" onclick="abrirModalRetorno('${r.id}', '${vVal}', '${mVal}')"><i data-lucide="log-in"></i> Retorno</button>`
               : '<span style="color:#94a3b8; font-size: 0.8rem;">Concluído</span>'
             }
           </td>
         `;
         tbody.appendChild(tr);
       });
-
       lucide.createIcons();
     }
 
     function abrirModalRetorno(id, veiculo, motorista) {
       document.getElementById('modalRetornoId').value = id;
-      document.getElementById('modalInfoVeiculo').innerHTML = `Registrando retorno para o veículo <strong>${veiculo}</strong> (ID #${id}) - Motorista: <strong>${motorista}</strong>`;
+      document.getElementById('modalInfoVeiculo').innerHTML = `Registrando retorno para <strong>${veiculo}</strong> (ID #${id}) - Motorista: <strong>${motorista}</strong>`;
       document.getElementById('formModalRetorno').reset();
       document.getElementById('modalRetorno').style.display = 'flex';
     }
 
-    function fecharModalRetorno() {
-      document.getElementById('modalRetorno').style.display = 'none';
-    }
+    function fecharModalRetorno() { document.getElementById('modalRetorno').style.display = 'none'; }
 
     function salvarSaida(event) {
       event.preventDefault();
+      const btn = document.getElementById('btnSubmitSaida');
+      btn.disabled = true;
       document.getElementById('overlayProcessando').style.display = 'flex';
-
-      const payload = {
-        acao: 'registrarSaida',
-        veiculo: document.getElementById('saidaVeiculo').value,
-        motorista: document.getElementById('saidaMotorista').value,
-        auxiliar: document.getElementById('saidaAuxiliares').value,
-        controladorSaida: document.getElementById('saidaControlador').value,
-        obsSaida: document.getElementById('saidaObs').value
-      };
 
       fetch(URL_PROXY, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          acao: 'registrarSaida',
+          veiculo: document.getElementById('saidaVeiculo').value,
+          motorista: document.getElementById('saidaMotorista').value,
+          auxiliar: document.getElementById('saidaAuxiliares').value,
+          controladorSaida: document.getElementById('saidaControlador').value,
+          obsSaida: document.getElementById('saidaObs').value
+        })
       })
-      .then(async res => {
-        const text = await res.text();
-        try {
-          return JSON.parse(text);
-        } catch (e) {
-          throw new Error("Erro no servidor proxy: " + text.slice(0, 100));
-        }
-      })
-      .then(resposta => {
+      .then(res => res.json())
+      .then(res => {
         document.getElementById('overlayProcessando').style.display = 'none';
-        if (resposta.status === 'sucesso' || resposta.sucesso) {
+        btn.disabled = false;
+        if (res.status === 'sucesso') {
           document.getElementById('formSaida').reset();
           buscarDados();
-        } else {
-          alert('Erro ao registrar saída: ' + (resposta.mensagem || resposta.erro || 'Erro desconhecido'));
-        }
+        } else alert('Erro: ' + res.mensagem);
       })
       .catch(err => {
         document.getElementById('overlayProcessando').style.display = 'none';
-        alert('Erro de comunicação: ' + err.message);
+        btn.disabled = false;
+        alert('Erro de conexão ao salvar.');
       });
     }
 
     function salvarRetornoModal(event) {
       event.preventDefault();
-      const ctrlRetorno = document.getElementById('modalControladorRetorno').value;
-      const obsRetorno = document.getElementById('modalObsRetorno').value;
-      const idReg = document.getElementById('modalRetornoId').value;
-
+      const btn = document.getElementById('btnSubmitRetorno');
+      btn.disabled = true;
       fecharModalRetorno();
       document.getElementById('overlayProcessando').style.display = 'flex';
-
-      const payload = {
-        acao: 'registrarRetorno',
-        id: idReg,
-        controladorChegada: ctrlRetorno,
-        controladorRetorno: ctrlRetorno,
-        obsRetorno: obsRetorno,
-        observacoes: obsRetorno
-      };
 
       fetch(URL_PROXY, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          acao: 'registrarRetorno',
+          id: document.getElementById('modalRetornoId').value,
+          controladorChegada: document.getElementById('modalControladorRetorno').value,
+          obsRetorno: document.getElementById('modalObsRetorno').value
+        })
       })
-      .then(async res => {
-        const text = await res.text();
-        try {
-          return JSON.parse(text);
-        } catch (e) {
-          throw new Error("Erro no servidor proxy: " + text.slice(0, 100));
-        }
-      })
-      .then(resposta => {
+      .then(res => res.json())
+      .then(res => {
         document.getElementById('overlayProcessando').style.display = 'none';
-        if (resposta.status === 'sucesso' || resposta.sucesso) {
-          buscarDados();
-        } else {
-          alert('Erro ao registrar retorno: ' + (resposta.mensagem || resposta.erro || 'Erro desconhecido'));
-        }
+        btn.disabled = false;
+        if (res.status === 'sucesso') buscarDados();
+        else alert('Erro: ' + res.mensagem);
       })
       .catch(err => {
         document.getElementById('overlayProcessando').style.display = 'none';
-        alert('Erro de comunicação: ' + err.message);
+        btn.disabled = false;
+        alert('Erro de conexão ao salvar.');
       });
     }
   </script>
