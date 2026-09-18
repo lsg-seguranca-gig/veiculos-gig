@@ -1,12 +1,25 @@
 export default async function handler(req, res) {
-  // URL do Web App publicado no Google Apps Script
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz9mkraqbunOd0wao6vVv3ICoS-yIXioAzi6cfT2gLIlTZm5V4ad7uleO4EekcUnDhRSA/exec';
+  // Configuração dos cabeçalhos CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  // URL do Web App do Google Apps Script
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbz9mkraqbunOd0wao6vVv3ICoS-yIXioAzi6cfT2gLIlTZm5V4ad7uleO4EekcUnDhRSA/exec";
 
   try {
     if (req.method === 'GET') {
-      // Repassa os parâmetros mantendo suporte a chamadas diretas da Vercel
       const queryString = new URLSearchParams(req.query).toString();
-      const targetUrl = queryString ? `${GOOGLE_SCRIPT_URL}?${queryString}` : GOOGLE_SCRIPT_URL;
+      const targetUrl = queryString ? `${GAS_URL}?${queryString}` : GAS_URL;
 
       const response = await fetch(targetUrl, {
         method: 'GET',
@@ -14,27 +27,31 @@ export default async function handler(req, res) {
         redirect: 'follow'
       });
 
-      const data = await response.json();
-      return res.status(200).json(data);
+      const data = await response.text();
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(200).send(data);
     } 
     
-    else if (req.method === 'POST') {
-      // Repassa o corpo da requisição POST para o Apps Script
-      const response = await fetch(GOOGLE_SCRIPT_URL, {
+    if (req.method === 'POST') {
+      const response = await fetch(GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: { 'Content-Type': 'application/json' },
         body: typeof req.body === 'string' ? req.body : JSON.stringify(req.body),
         redirect: 'follow'
       });
 
-      const data = await response.json();
-      return res.status(200).json(data);
-    } 
-
-    else {
-      return res.status(405).json({ status: 'erro', mensagem: 'Método não permitido.' });
+      const data = await response.text();
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(200).send(data);
     }
+
+    return res.status(405).json({ status: 'erro', mensagem: 'Método não permitido.' });
   } catch (error) {
-    return res.status(500).json({ status: 'erro', mensagem: 'Erro no servidor proxy Vercel: ' + error.message });
+    console.error('Erro no Proxy GAS:', error);
+    return res.status(500).json({ 
+      status: 'erro', 
+      mensagem: 'Falha na comunicação com o Google Apps Script.', 
+      detalhe: error.toString() 
+    });
   }
 }
