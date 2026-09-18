@@ -227,7 +227,16 @@
       registros.forEach(r => {
         const tr = document.createElement('tr');
         
-        const dtRetorno = pegarValor(r, 'dataRetorno', 'dataChegada');
+        // Formata Data/Hora de Saída
+        const dtSaida = r.dataSaida 
+          ? (r.horarioSaida ? `${r.dataSaida} ${r.horarioSaida}` : r.dataSaida) 
+          : '-';
+
+        // Formata Data/Hora de Retorno
+        const dtRetorno = r.dataChegada 
+          ? (r.horarioChegada ? `${r.dataChegada} ${r.horarioChegada}` : r.dataChegada) 
+          : '-';
+
         const ctrlRetorno = pegarValor(r, 'controladorRetorno', 'controladorChegada');
         const obsFinal = pegarValor(r, 'observacoes', 'observacao', 'obs', 'obsSaida', 'obsRetorno');
 
@@ -243,7 +252,7 @@
           <td>${vVal}</td>
           <td>${mVal}</td>
           <td>${pegarValor(r, 'auxiliar', 'auxiliares')}</td>
-          <td>${pegarValor(r, 'dataSaida')}</td>
+          <td>${dtSaida}</td>
           <td>${pegarValor(r, 'controladorSaida')}</td>
           <td>${dtRetorno}</td>
           <td>${ctrlRetorno}</td>
