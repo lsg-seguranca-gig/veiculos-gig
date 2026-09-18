@@ -175,17 +175,26 @@
       
       fetch(`${URL_PROXY}?acao=obterTodos`)
         .then(async res => {
-          if (!res.ok) {
-            const txt = await res.text();
-            throw new Error(`Erro HTTP ${res.status}: ${txt || res.statusText}`);
+          const texto = await res.text();
+          let resposta;
+          
+          try {
+            resposta = JSON.parse(texto);
+          } catch (e) {
+            throw new Error(`A API não retornou um JSON válido. Resposta da API: ${texto.substring(0, 100)}...`);
           }
-          return res.json();
+
+          if (!res.ok) {
+            throw new Error(`Erro HTTP ${res.status}: ${resposta.mensagem || resposta.error || texto}`);
+          }
+
+          return resposta;
         })
         .then(resposta => {
           document.getElementById('overlayProcessando').style.display = 'none';
           
           if (resposta && resposta.status === 'erro') {
-            throw new Error(resposta.mensagem || 'Erro interno no Apps Script');
+            throw new Error(resposta.mensagem || 'Erro retornado pelo Google Apps Script');
           }
 
           todosRegistros = (resposta.registros || resposta.movimentacoes || resposta || []).filter(r => r && r.id);
@@ -193,7 +202,7 @@
           filtrarTabela();
         })
         .catch(err => {
-          console.error('Detalhes do erro na requisição:', err);
+          console.error('Erro na requisição:', err);
           document.getElementById('overlayProcessando').style.display = 'none';
           document.getElementById('tabelaRelatorio').innerHTML = `
             <tr>
@@ -247,12 +256,10 @@
       registros.forEach(r => {
         const tr = document.createElement('tr');
         
-        // Formata Data/Hora de Saída
         const dtSaida = r.dataSaida 
           ? (r.horarioSaida ? `${r.dataSaida} ${r.horarioSaida}` : r.dataSaida) 
           : '-';
 
-        // Formata Data/Hora de Retorno
         const dtRetorno = r.dataChegada 
           ? (r.horarioChegada ? `${r.dataChegada} ${r.horarioChegada}` : r.dataChegada) 
           : '-';
