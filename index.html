@@ -146,15 +146,11 @@
 
     function pegarValor(item, ...chaves) {
       if (!item) return '-';
-      
-      // Procura primeiro pelas chaves exatas passadas no argumento
       for (let k of chaves) {
         if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') {
           return String(item[k]).trim();
         }
       }
-
-      // Procura insensível a maiúsculas/minúsculas caso a chave venha no formato diferente da planilha/API
       const itemKeys = Object.keys(item);
       for (let k of chaves) {
         const keyLower = k.toLowerCase();
@@ -163,14 +159,40 @@
           return String(item[foundKey]).trim();
         }
       }
-
       return '-';
+    }
+
+    function extrairObservacoesTotais(r) {
+      const valoresChavesNativas = [
+        pegarValor(r, 'obsSaida', 'observacaoSaida', 'obs_saida', 'observacao_saida'),
+        pegarValor(r, 'obsRetorno', 'observacaoRetorno', 'obs_retorno', 'observacao_retorno'),
+        pegarValor(r, 'obs', 'observacoes', 'observacao', 'destino', 'notes', 'comments')
+      ].filter(v => v !== '-');
+
+      if (valoresChavesNativas.length > 0) {
+        return [...new Set(valoresChavesNativas)].join(' | ');
+      }
+
+      // Varredura cega em todas as propriedades para capturar colunas dinâmicas do Apps Script
+      const camposDescartados = ['id', 'status', 'veiculo', 'motorista', 'auxiliar', 'auxiliares', 'datasaida', 'horariosaida', 'datachegada', 'horariochegada', 'dataretorno', 'horarioretorno', 'controladorsaida', 'controladorchegada', 'controladorretorno'];
+      const encontrados = [];
+      
+      Object.keys(r).forEach(k => {
+        const kClean = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!camposDescartados.includes(kClean)) {
+          const val = String(r[k]).trim();
+          if (val && val !== '-' && val !== 'null' && val !== 'undefined') {
+            encontrados.push(val);
+          }
+        }
+      });
+
+      return encontrados.length > 0 ? [...new Set(encontrados)].join(' | ') : '-';
     }
 
     function formatarDataHoraExibicao(dataStr, horaStr) {
       const dValida = dataStr && dataStr !== '-';
       const hValida = horaStr && horaStr !== '-';
-
       if (!dValida && !hValida) return '-';
       if (dValida && hValida) return `${dataStr} ${horaStr}`;
       return dValida ? dataStr : horaStr;
@@ -182,6 +204,7 @@
         .then(res => res.json())
         .then(resposta => {
           document.getElementById('overlayProcessando').style.display = 'none';
+          console.log("Dados recebidos da API:", resposta); // Ajuda na inspeção via F12
           todosRegistros = (resposta.registros || resposta.movimentacoes || resposta || []).filter(r => r && r.id);
           popularDropdowns(resposta);
           renderizarTabela(todosRegistros);
@@ -220,25 +243,12 @@
       [...registros].reverse().forEach(r => {
         const tr = document.createElement('tr');
         
-        // Mapeamento extensivo de chaves para Datas e Controladores de Retorno
         const dataRet = pegarValor(r, 'dataChegada', 'dataRetorno', 'dataChegadaFormatada', 'data_chegada', 'data_retorno');
         const horaRet = pegarValor(r, 'horarioChegada', 'horarioRetorno', 'horaChegada', 'horaRetorno', 'horario_chegada', 'horario_retorno');
         const ctrlRet = pegarValor(r, 'controladorChegada', 'controladorRetorno', 'controladorChegadaNome', 'controlador_chegada', 'controlador_retorno');
 
-        // Mapeamento extensivo de Observações (Captura todas as variações de colunas da Planilha/API)
-        const obsSaida = pegarValor(r, 'obsSaida', 'observacaoSaida', 'obs', 'observacoes', 'observacao', 'destino', 'obs_saida', 'observacao_saida');
-        const obsRet = pegarValor(r, 'obsRetorno', 'observacaoRetorno', 'obs_retorno', 'observacao_retorno');
-        
-        let obsFinal = '-';
-        if (obsSaida !== '-' && obsRet !== '-') {
-          obsFinal = `${obsSaida} | ${obsRet}`;
-        } else if (obsSaida !== '-') {
-          obsFinal = obsSaida;
-        } else if (obsRet !== '-') {
-          obsFinal = obsRet;
-        }
+        const obsFinal = extrairObservacoesTotais(r);
 
-        // Determinação do Status
         const temRetornoDataHora = (dataRet !== '-') || (horaRet !== '-');
         const temRetornoCtrl = ctrlRet !== '-';
         const statusDeclarado = String(r.status || '').toUpperCase();
