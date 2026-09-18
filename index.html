@@ -153,10 +153,12 @@
     }
 
     function formatarDataHoraExibicao(dataStr, horaStr) {
-      if ((!dataStr || dataStr === '-') && (!horaStr || horaStr === '-')) return '-';
-      if (!dataStr || dataStr === '-') return horaStr;
-      if (!horaStr || horaStr === '-') return dataStr;
-      return `${dataStr} ${horaStr}`;
+      const dValida = dataStr && dataStr !== '-';
+      const hValida = horaStr && horaStr !== '-';
+
+      if (!dValida && !hValida) return '-';
+      if (dValida && hValida) return `${dataStr} ${horaStr}`;
+      return dValida ? dataStr : horaStr;
     }
 
     function buscarDados() {
@@ -185,7 +187,7 @@
 
     function preencherSelect(id, lista, padrao) {
       const select = document.getElementById(id);
-      if (select.children.length > 1) return; // Evita re-renderizar caso já populado
+      if (select.children.length > 1) return;
       select.innerHTML = `<option value="">${padrao}</option>`;
       lista.forEach(item => {
         if (item) select.appendChild(new Option(item, item));
@@ -203,15 +205,26 @@
       [...registros].reverse().forEach(r => {
         const tr = document.createElement('tr');
         
-        // Mapeamento abrangente das propriedades de retorno retornadas pelo backend
-        const dataRet = pegarValor(r, 'dataChegada', 'dataRetorno', 'dataChegadaFormatada');
-        const horaRet = pegarValor(r, 'horarioChegada', 'horarioRetorno', 'horaChegada');
-        const ctrlRet = pegarValor(r, 'controladorChegada', 'controladorRetorno');
+        // Mapeamento extensivo das chaves vindas da API/Planilha
+        const dataRet = pegarValor(r, 'dataChegada', 'dataRetorno', 'dataChegadaFormatada', 'data');
+        const horaRet = pegarValor(r, 'horarioChegada', 'horarioRetorno', 'horaChegada', 'horaRetorno', 'horario');
+        const ctrlRet = pegarValor(r, 'controladorChegada', 'controladorRetorno', 'controladorChegadaNome');
 
-        // Considera Concluído se possui data de retorno, horário de retorno OU controlador de retorno
+        // Busca de Observações (Saída, Retorno ou Geraes)
+        const obsSaida = pegarValor(r, 'obsSaida', 'observacaoSaida', 'obs', 'observacoes', 'observacao');
+        const obsRet = pegarValor(r, 'obsRetorno', 'observacaoRetorno');
+        let obsFinal = '-';
+        if (obsSaida !== '-' && obsRet !== '-') obsFinal = `${obsSaida} | ${obsRet}`;
+        else if (obsSaida !== '-') obsFinal = obsSaida;
+        else if (obsRet !== '-') obsFinal = obsRet;
+
+        // Determinação real do Status
         const temRetornoDataHora = (dataRet !== '-') || (horaRet !== '-');
         const temRetornoCtrl = ctrlRet !== '-';
-        const emTransito = !(r.status === 'CONCLUIDO' || temRetornoDataHora || temRetornoCtrl);
+        const statusDeclarado = String(r.status || '').toUpperCase();
+        
+        const ehConcluido = statusDeclarado === 'CONCLUIDO' || statusDeclarado === 'CONCLUÍDO' || temRetornoDataHora || temRetornoCtrl;
+        const emTransito = !ehConcluido;
 
         const vVal = pegarValor(r, 'veiculo');
         const mVal = pegarValor(r, 'motorista');
@@ -222,12 +235,12 @@
           <td><span class="${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
           <td>${vVal}</td>
           <td>${mVal}</td>
-          <td>${pegarValor(r, 'auxiliar')}</td>
-          <td>${formatarDataHoraExibicao(pegarValor(r, 'dataSaida'), pegarValor(r, 'horarioSaida', 'horaSaida'))}</td>
-          <td>${pegarValor(r, 'controladorSaida')}</td>
+          <td>${pegarValor(r, 'auxiliar', 'auxiliares')}</td>
+          <td>${formatarDataHoraExibicao(pegarValor(r, 'dataSaida', 'data'), pegarValor(r, 'horarioSaida', 'horaSaida', 'horario'))}</td>
+          <td>${pegarValor(r, 'controladorSaida', 'controlador')}</td>
           <td>${dtHoraRetornoStr}</td>
           <td>${ctrlRet}</td>
-          <td>${pegarValor(r, 'obsSaida')}</td>
+          <td>${obsFinal}</td>
           <td style="text-align: center;">
             ${emTransito 
               ? `<button class="btn btn-success btn-sm" onclick="abrirModalRetorno('${r.id}', '${vVal}', '${mVal}')"><i data-lucide="log-in"></i> Retorno</button>`
