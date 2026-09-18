@@ -1,3 +1,7 @@
+export const config = {
+  maxDuration: 10, // Define tempo máximo de execução
+};
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
