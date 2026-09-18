@@ -15,7 +15,10 @@
     .header-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
     main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
     .card { background: #ffffff; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
-    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+    .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px; }
+    .card-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+    .filter-container { display: flex; align-items: center; gap: 8px; }
+    .filter-label { font-size: 0.85rem; font-weight: 600; color: #475569; }
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full-width { grid-column: 1 / -1; }
@@ -66,7 +69,7 @@
   <main>
     <div class="card">
       <h2 class="card-title"><i data-lucide="log-out"></i> Registrar Nova Saída de Veículo</h2>
-      <form id="formSaida" onsubmit="salvarSaida(event)">
+      <form id="formSaida" onsubmit="salvarSaida(event)" style="margin-top: 1.25rem;">
         <div class="form-grid">
           <div class="form-group">
             <label for="saidaVeiculo">Veículo *</label>
@@ -96,7 +99,20 @@
     </div>
 
     <div class="card">
-      <h2 class="card-title"><i data-lucide="truck"></i> Veículos em Atendimento / Histórico</h2>
+      <div class="card-header-flex">
+        <h2 class="card-title"><i data-lucide="truck"></i> Veículos em Atendimento / Histórico</h2>
+        
+        <!-- FILTRO DE STATUS -->
+        <div class="filter-container">
+          <label for="filtroStatus" class="filter-label"><i data-lucide="filter"></i> Filtrar Status:</label>
+          <select id="filtroStatus" class="form-control" onchange="filtrarTabela()" style="width: 180px;">
+            <option value="TODOS">Todos os Registros</option>
+            <option value="EM_TRANSITO" selected>Em Trânsito</option>
+            <option value="CONCLUIDO">Concluídos</option>
+          </select>
+        </div>
+      </div>
+
       <div class="table-container">
         <table>
           <thead>
@@ -151,67 +167,41 @@
           return String(item[k]).trim();
         }
       }
-      const itemKeys = Object.keys(item);
-      for (let k of chaves) {
-        const keyLower = k.toLowerCase();
-        const foundKey = itemKeys.find(ik => ik.toLowerCase() === keyLower);
-        if (foundKey && item[foundKey] !== undefined && item[foundKey] !== null && String(item[foundKey]).trim() !== '' && String(item[foundKey]).trim() !== '-') {
-          return String(item[foundKey]).trim();
-        }
-      }
       return '-';
-    }
-
-    function extrairObservacoesTotais(r) {
-      const valoresChavesNativas = [
-        pegarValor(r, 'obsSaida', 'observacaoSaida', 'obs_saida', 'observacao_saida'),
-        pegarValor(r, 'obsRetorno', 'observacaoRetorno', 'obs_retorno', 'observacao_retorno'),
-        pegarValor(r, 'obs', 'observacoes', 'observacao', 'destino', 'notes', 'comments')
-      ].filter(v => v !== '-');
-
-      if (valoresChavesNativas.length > 0) {
-        return [...new Set(valoresChavesNativas)].join(' | ');
-      }
-
-      // Varredura cega em todas as propriedades para capturar colunas dinâmicas do Apps Script
-      const camposDescartados = ['id', 'status', 'veiculo', 'motorista', 'auxiliar', 'auxiliares', 'datasaida', 'horariosaida', 'datachegada', 'horariochegada', 'dataretorno', 'horarioretorno', 'controladorsaida', 'controladorchegada', 'controladorretorno'];
-      const encontrados = [];
-      
-      Object.keys(r).forEach(k => {
-        const kClean = k.toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (!camposDescartados.includes(kClean)) {
-          const val = String(r[k]).trim();
-          if (val && val !== '-' && val !== 'null' && val !== 'undefined') {
-            encontrados.push(val);
-          }
-        }
-      });
-
-      return encontrados.length > 0 ? [...new Set(encontrados)].join(' | ') : '-';
-    }
-
-    function formatarDataHoraExibicao(dataStr, horaStr) {
-      const dValida = dataStr && dataStr !== '-';
-      const hValida = horaStr && horaStr !== '-';
-      if (!dValida && !hValida) return '-';
-      if (dValida && hValida) return `${dataStr} ${horaStr}`;
-      return dValida ? dataStr : horaStr;
     }
 
     function buscarDados() {
       document.getElementById('overlayProcessando').style.display = 'flex';
+      
       fetch(`${URL_PROXY}?acao=obterTodos`)
-        .then(res => res.json())
+        .then(async res => {
+          if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(`Erro HTTP ${res.status}: ${txt || res.statusText}`);
+          }
+          return res.json();
+        })
         .then(resposta => {
           document.getElementById('overlayProcessando').style.display = 'none';
-          console.log("Dados recebidos da API:", resposta); // Ajuda na inspeção via F12
+          
+          if (resposta && resposta.status === 'erro') {
+            throw new Error(resposta.mensagem || 'Erro interno no Apps Script');
+          }
+
           todosRegistros = (resposta.registros || resposta.movimentacoes || resposta || []).filter(r => r && r.id);
           popularDropdowns(resposta);
-          renderizarTabela(todosRegistros);
+          filtrarTabela();
         })
         .catch(err => {
+          console.error('Detalhes do erro na requisição:', err);
           document.getElementById('overlayProcessando').style.display = 'none';
-          document.getElementById('tabelaRelatorio').innerHTML = `<tr><td colspan="11" style="color:#dc2626; text-align:center; padding: 1.5rem;">Falha ao carregar dados. <button class="btn btn-sm btn-outline" onclick="buscarDados()">Tentar Novamente</button></td></tr>`;
+          document.getElementById('tabelaRelatorio').innerHTML = `
+            <tr>
+              <td colspan="11" style="color:#dc2626; text-align:center; padding: 1.5rem;">
+                Falha ao carregar dados (${err.message}). 
+                <button class="btn btn-sm btn-outline" onclick="buscarDados()" style="margin-left: 8px;">Tentar Novamente</button>
+              </td>
+            </tr>`;
         });
     }
 
@@ -232,33 +222,49 @@
       });
     }
 
+    function filtrarTabela() {
+      const comboFiltro = document.getElementById('filtroStatus');
+      const statusSelecionado = comboFiltro ? comboFiltro.value : 'EM_TRANSITO';
+      
+      let dadosFiltrados = todosRegistros;
+      if (statusSelecionado === 'EM_TRANSITO') {
+        dadosFiltrados = todosRegistros.filter(r => r.status === 'EM_TRANSITO');
+      } else if (statusSelecionado === 'CONCLUIDO') {
+        dadosFiltrados = todosRegistros.filter(r => r.status === 'CONCLUIDO');
+      }
+
+      renderizarTabela(dadosFiltrados);
+    }
+
     function renderizarTabela(registros) {
       const tbody = document.getElementById('tabelaRelatorio');
       tbody.innerHTML = '';
       if (!registros.length) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 2rem;">Nenhum registro encontrado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 2rem;">Nenhum registro encontrado para este filtro.</td></tr>';
         return;
       }
 
-      [...registros].reverse().forEach(r => {
+      registros.forEach(r => {
         const tr = document.createElement('tr');
         
-        const dataRet = pegarValor(r, 'dataChegada', 'dataRetorno', 'dataChegadaFormatada', 'data_chegada', 'data_retorno');
-        const horaRet = pegarValor(r, 'horarioChegada', 'horarioRetorno', 'horaChegada', 'horaRetorno', 'horario_chegada', 'horario_retorno');
-        const ctrlRet = pegarValor(r, 'controladorChegada', 'controladorRetorno', 'controladorChegadaNome', 'controlador_chegada', 'controlador_retorno');
+        // Formata Data/Hora de Saída
+        const dtSaida = r.dataSaida 
+          ? (r.horarioSaida ? `${r.dataSaida} ${r.horarioSaida}` : r.dataSaida) 
+          : '-';
 
-        const obsFinal = extrairObservacoesTotais(r);
+        // Formata Data/Hora de Retorno
+        const dtRetorno = r.dataChegada 
+          ? (r.horarioChegada ? `${r.dataChegada} ${r.horarioChegada}` : r.dataChegada) 
+          : '-';
 
-        const temRetornoDataHora = (dataRet !== '-') || (horaRet !== '-');
-        const temRetornoCtrl = ctrlRet !== '-';
-        const statusDeclarado = String(r.status || '').toUpperCase();
-        
-        const ehConcluido = statusDeclarado === 'CONCLUIDO' || statusDeclarado === 'CONCLUÍDO' || temRetornoDataHora || temRetornoCtrl;
+        const ctrlRetorno = pegarValor(r, 'controladorRetorno', 'controladorChegada');
+        const obsFinal = pegarValor(r, 'observacoes', 'observacao', 'obs', 'obsSaida', 'obsRetorno');
+
+        const ehConcluido = r.status === 'CONCLUIDO';
         const emTransito = !ehConcluido;
 
         const vVal = pegarValor(r, 'veiculo');
         const mVal = pegarValor(r, 'motorista');
-        const dtHoraRetornoStr = formatarDataHoraExibicao(dataRet, horaRet);
 
         tr.innerHTML = `
           <td><strong>#${r.id}</strong></td>
@@ -266,10 +272,10 @@
           <td>${vVal}</td>
           <td>${mVal}</td>
           <td>${pegarValor(r, 'auxiliar', 'auxiliares')}</td>
-          <td>${formatarDataHoraExibicao(pegarValor(r, 'dataSaida', 'data_saida'), pegarValor(r, 'horarioSaida', 'horaSaida', 'horario_saida'))}</td>
-          <td>${pegarValor(r, 'controladorSaida', 'controlador_saida')}</td>
-          <td>${dtHoraRetornoStr}</td>
-          <td>${ctrlRet}</td>
+          <td>${dtSaida}</td>
+          <td>${pegarValor(r, 'controladorSaida')}</td>
+          <td>${dtRetorno}</td>
+          <td>${ctrlRetorno}</td>
           <td>${obsFinal}</td>
           <td style="text-align: center;">
             ${emTransito 
