@@ -153,8 +153,10 @@
     }
 
     function formatarDataHoraExibicao(dataStr, horaStr) {
-      if (!dataStr || dataStr === '-') return '-';
-      return (horaStr && horaStr !== '-') ? `${dataStr} ${horaStr}` : dataStr;
+      if ((!dataStr || dataStr === '-') && (!horaStr || horaStr === '-')) return '-';
+      if (!dataStr || dataStr === '-') return horaStr;
+      if (!horaStr || horaStr === '-') return dataStr;
+      return `${dataStr} ${horaStr}`;
     }
 
     function buscarDados() {
@@ -201,13 +203,19 @@
       [...registros].reverse().forEach(r => {
         const tr = document.createElement('tr');
         
-        // Validação atualizada: Considera Concluído se possui data de chegada OU controlador de retorno
-        const temRetornoData = r.dataChegada && r.dataChegada !== '-';
-        const temRetornoCtrl = r.controladorChegada && r.controladorChegada !== '-';
-        const emTransito = !(r.status === 'CONCLUIDO' || temRetornoData || temRetornoCtrl);
+        // Mapeamento abrangente das propriedades de retorno retornadas pelo backend
+        const dataRet = pegarValor(r, 'dataChegada', 'dataRetorno', 'dataChegadaFormatada');
+        const horaRet = pegarValor(r, 'horarioChegada', 'horarioRetorno', 'horaChegada');
+        const ctrlRet = pegarValor(r, 'controladorChegada', 'controladorRetorno');
+
+        // Considera Concluído se possui data de retorno, horário de retorno OU controlador de retorno
+        const temRetornoDataHora = (dataRet !== '-') || (horaRet !== '-');
+        const temRetornoCtrl = ctrlRet !== '-';
+        const emTransito = !(r.status === 'CONCLUIDO' || temRetornoDataHora || temRetornoCtrl);
 
         const vVal = pegarValor(r, 'veiculo');
         const mVal = pegarValor(r, 'motorista');
+        const dtHoraRetornoStr = formatarDataHoraExibicao(dataRet, horaRet);
 
         tr.innerHTML = `
           <td><strong>#${r.id}</strong></td>
@@ -215,10 +223,10 @@
           <td>${vVal}</td>
           <td>${mVal}</td>
           <td>${pegarValor(r, 'auxiliar')}</td>
-          <td>${formatarDataHoraExibicao(r.dataSaida, r.horarioSaida)}</td>
+          <td>${formatarDataHoraExibicao(pegarValor(r, 'dataSaida'), pegarValor(r, 'horarioSaida', 'horaSaida'))}</td>
           <td>${pegarValor(r, 'controladorSaida')}</td>
-          <td>${emTransito ? '-' : formatarDataHoraExibicao(r.dataChegada, r.horarioChegada)}</td>
-          <td>${pegarValor(r, 'controladorChegada')}</td>
+          <td>${dtHoraRetornoStr}</td>
+          <td>${ctrlRet}</td>
           <td>${pegarValor(r, 'obsSaida')}</td>
           <td style="text-align: center;">
             ${emTransito 
