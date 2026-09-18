@@ -200,7 +200,12 @@
 
       [...registros].reverse().forEach(r => {
         const tr = document.createElement('tr');
-        const emTransito = (r.status === 'EM_TRANSITO' || !r.dataChegada || r.dataChegada === '-');
+        
+        // Validação atualizada: Considera Concluído se possui data de chegada OU controlador de retorno
+        const temRetornoData = r.dataChegada && r.dataChegada !== '-';
+        const temRetornoCtrl = r.controladorChegada && r.controladorChegada !== '-';
+        const emTransito = !(r.status === 'CONCLUIDO' || temRetornoData || temRetornoCtrl);
+
         const vVal = pegarValor(r, 'veiculo');
         const mVal = pegarValor(r, 'motorista');
 
