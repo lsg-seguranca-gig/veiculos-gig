@@ -147,14 +147,11 @@
     function pegarValor(item, ...chaves) {
       if (!item) return '-';
       for (let k of chaves) {
-        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') return String(item[k]).trim();
+        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') {
+          return String(item[k]).trim();
+        }
       }
       return '-';
-    }
-
-    function formatarDataHoraExibicao(dataStr, horaStr) {
-      if (!dataStr || dataStr === '-') return '-';
-      return (horaStr && horaStr !== '-') ? `${dataStr} ${horaStr}` : dataStr;
     }
 
     function buscarDados() {
@@ -183,7 +180,7 @@
 
     function preencherSelect(id, lista, padrao) {
       const select = document.getElementById(id);
-      if (select.children.length > 1) return; // Evita re-renderizar caso já populado
+      if (select.children.length > 1) return;
       select.innerHTML = `<option value="">${padrao}</option>`;
       lista.forEach(item => {
         if (item) select.appendChild(new Option(item, item));
@@ -200,7 +197,16 @@
 
       [...registros].reverse().forEach(r => {
         const tr = document.createElement('tr');
-        const emTransito = (r.status === 'EM_TRANSITO' || !r.dataChegada || r.dataChegada === '-');
+        
+        const dtRetorno = pegarValor(r, 'dataRetorno', 'dataChegada');
+        const ctrlRetorno = pegarValor(r, 'controladorRetorno', 'controladorChegada');
+        
+        // Captura o campo de observações mapeado na Coluna I
+        const obsFinal = pegarValor(r, 'observacoes', 'observacao', 'obs', 'obsSaida', 'obsRetorno');
+
+        const ehConcluido = (dtRetorno !== '-') || (ctrlRetorno !== '-');
+        const emTransito = !ehConcluido;
+
         const vVal = pegarValor(r, 'veiculo');
         const mVal = pegarValor(r, 'motorista');
 
@@ -209,12 +215,12 @@
           <td><span class="${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
           <td>${vVal}</td>
           <td>${mVal}</td>
-          <td>${pegarValor(r, 'auxiliar')}</td>
-          <td>${formatarDataHoraExibicao(r.dataSaida, r.horarioSaida)}</td>
+          <td>${pegarValor(r, 'auxiliar', 'auxiliares')}</td>
+          <td>${pegarValor(r, 'dataSaida')}</td>
           <td>${pegarValor(r, 'controladorSaida')}</td>
-          <td>${emTransito ? '-' : formatarDataHoraExibicao(r.dataChegada, r.horarioChegada)}</td>
-          <td>${pegarValor(r, 'controladorChegada')}</td>
-          <td>${pegarValor(r, 'obsSaida')}</td>
+          <td>${dtRetorno}</td>
+          <td>${ctrlRetorno}</td>
+          <td>${obsFinal}</td>
           <td style="text-align: center;">
             ${emTransito 
               ? `<button class="btn btn-success btn-sm" onclick="abrirModalRetorno('${r.id}', '${vVal}', '${mVal}')"><i data-lucide="log-in"></i> Retorno</button>`
