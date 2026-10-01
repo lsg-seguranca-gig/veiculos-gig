@@ -1,6 +1,6 @@
 // Proxy Vercel -> Google Apps Script
 // Defina GAS_URL nas variáveis de ambiente da Vercel (opcional: há um valor padrão abaixo).
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbz9mkraqbunOd0wao6vVv3ICoS-yIXioAzi6cfT2gLIlTZm5V4ad7uleO4EekcUnDhRSA/exec';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbx1c7Jdwv7eoV9jY3o1Rzqv-7XIloGv2R--AaB6m-vcyAMT7i0-cN6657UJQ-4h52sh/exec';
 const TIMEOUT_MS = 25000;
 const GET_PARAMS = ['acao', 'dataInicio', 'dataFim'];
 const ACOES_GET = ['operacao', 'obterTodos', 'obterOpcoes', 'relatorio'];
