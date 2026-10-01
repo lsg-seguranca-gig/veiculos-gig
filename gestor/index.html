@@ -51,10 +51,25 @@
     /* Tabela */
     .table-card { background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .table-title { padding: 15px 20px; font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-    .table-wrapper { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
-    th, td { padding: 12px 15px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-    th { background: #f1f5f9; font-weight: 600; color: var(--text-muted); }
+    .table-wrapper { overflow-x: hidden; }
+    table { width: 100%; table-layout: fixed; border-collapse: collapse; text-align: left; font-size: 0.8rem; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); white-space: normal; overflow-wrap: break-word; vertical-align: top; }
+    th { background: #f1f5f9; font-weight: 600; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.02em; }
+    /* Larguras somam 100%: cada coluna quebra o texto em vez de forçar scroll horizontal */
+    col.c-status { width: 9%; } col.c-veiculo { width: 10%; } col.c-motorista { width: 14%; }
+    col.c-auxiliar { width: 14%; } col.c-saida { width: 11%; } col.c-retorno { width: 11%; }
+    col.c-ctrl { width: 13%; } col.c-obs { width: 18%; }
+
+    /* Abaixo de 700px: tabela vira lista de cartões (cada linha, uma coluna), continua sem scroll horizontal */
+    @media (max-width: 700px) {
+      table, thead, tbody, th, td, tr { display: block; width: 100% !important; }
+      thead { display: none; }
+      tbody tr { border: 1px solid var(--border); border-radius: 8px; margin: 10px; padding: 6px 0; }
+      tbody td { border-bottom: none; padding: 6px 12px; display: flex; gap: 6px; }
+      tbody td::before { content: attr(data-label); flex: 0 0 110px; font-weight: 600; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; }
+      tbody td.wrap { display: block; padding-top: 2px; }
+      tbody td.wrap::before { display: block; margin-bottom: 2px; }
+    }
 
     /* Badges */
     .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
@@ -67,7 +82,7 @@
     .aviso { display: none; margin-top: 12px; padding: 10px 14px; border-radius: 6px; background: #fef3c7; color: #92400e; font-size: 0.85rem; font-weight: 600; }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .mais { display: none; padding: 12px; text-align: center; border-top: 1px solid var(--border); }
-    td.wrap { white-space: normal; min-width: 180px; }
+    td.wrap small { line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -119,6 +134,10 @@
       <div class="info-linha" id="infoResultado">Nenhuma busca realizada.</div>
       <div class="table-wrapper">
         <table>
+          <colgroup>
+            <col class="c-status"><col class="c-veiculo"><col class="c-motorista"><col class="c-auxiliar">
+            <col class="c-saida"><col class="c-retorno"><col class="c-ctrl"><col class="c-obs">
+          </colgroup>
           <thead>
             <tr>
               <th>Status</th><th>Veículo</th><th>Motorista</th><th>Auxiliar</th>
@@ -284,14 +303,14 @@
         tbody.innerHTML = filtrados.slice(0, exibidos).map(r => {
           const emTransito = r.status !== 'CONCLUIDO';
           return `<tr>
-            <td><span class="badge ${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
-            <td><strong>${esc(val(r.veiculo))}</strong></td>
-            <td>${esc(val(r.motorista))}</td>
-            <td>${esc(val(r.auxiliar))}</td>
-            <td>📅 ${esc(val(r.dataSaida))}<br>⏰ ${esc(val(r.horarioSaida))}</td>
-            <td>${emTransito ? '<em>Em andamento</em>' : `📅 ${esc(val(r.dataChegada))}<br>⏰ ${esc(val(r.horarioChegada))}`}</td>
-            <td><small><strong>S:</strong> ${esc(val(r.controladorSaida))}</small><br><small><strong>R:</strong> ${esc(val(r.controladorChegada))}</small></td>
-            <td class="wrap"><small>${esc(val(r.observacoes))}</small></td>
+            <td data-label="Status"><span class="badge ${emTransito ? 'badge-transito' : 'badge-concluido'}">${emTransito ? 'Em Trânsito' : 'Concluído'}</span></td>
+            <td data-label="Veículo"><strong>${esc(val(r.veiculo))}</strong></td>
+            <td data-label="Motorista">${esc(val(r.motorista))}</td>
+            <td data-label="Auxiliar">${esc(val(r.auxiliar))}</td>
+            <td data-label="Saída">📅 ${esc(val(r.dataSaida))}<br>⏰ ${esc(val(r.horarioSaida))}</td>
+            <td data-label="Retorno">${emTransito ? '<em>Em andamento</em>' : `📅 ${esc(val(r.dataChegada))}<br>⏰ ${esc(val(r.horarioChegada))}`}</td>
+            <td data-label="Controladores"><small><strong>S:</strong> ${esc(val(r.controladorSaida))}</small><br><small><strong>R:</strong> ${esc(val(r.controladorChegada))}</small></td>
+            <td class="wrap" data-label="Obs / Destino"><small>${esc(val(r.observacoes))}</small></td>
           </tr>`;
         }).join('');
       }
