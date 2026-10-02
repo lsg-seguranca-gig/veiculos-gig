@@ -68,3 +68,4 @@ export default async function handler(req, res) {
     return res.status(502).json({ status: 'erro', mensagem: msg });
   }
 }
+// teste redeploy
